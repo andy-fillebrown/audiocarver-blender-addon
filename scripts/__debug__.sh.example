@@ -1,0 +1,3 @@
+
+mate-terminal --maximize -e "$BLENDER_DIR/blender -P scripts/__debug__.py blend/audiosculpture-rig.blend"
+

@@ -1,0 +1,22 @@
+# This file is used to ignore files which are generated
+# ----------------------------------------------------------------------------
+
+*.lnk
+
+# Python cache files generated when running Blender
+# -------------------------------------------------
+*__pycache__*
+
+# Blender backup files
+# --------------------
+*.blend1
+*.blend2
+
+# Scripts that are not portable
+# -----------------------------
+scripts/__debug__.py
+scripts/__debug__.sh
+blendenv.bat
+debug.sh
+release.sh
+

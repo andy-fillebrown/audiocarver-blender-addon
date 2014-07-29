@@ -1,0 +1,6 @@
+
+export BLENDER_DIR=/home/andy/-/usr/bin/blender
+export BLENDER_USER_SCRIPTS=./src
+
+./scripts/__debug__.sh
+
