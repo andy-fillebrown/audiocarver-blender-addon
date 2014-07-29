@@ -1,0 +1,8 @@
+
+# Linux
+#BLENDER_DIR=/usr/bin/blender
+
+# OSX
+#BLENDER_DIR=/Applications/blender.app/Contents/MacOS
+
+export BLENDER_USER_SCRIPTS=./src

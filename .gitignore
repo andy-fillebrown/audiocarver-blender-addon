@@ -17,6 +17,4 @@
 scripts/__debug__.py
 scripts/__debug__.sh
 blendenv.bat
-debug.sh
-release.sh
-
+blendenv.sh

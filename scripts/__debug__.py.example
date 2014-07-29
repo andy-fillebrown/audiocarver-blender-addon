@@ -2,6 +2,9 @@
 # Linux
 #pydev_path = "/home/andy/.eclipse/org.eclipse.platform_3.8_155965261/plugins/org.python.pydev_2.7.5.2013052819/pysrc"
 
+# OSX
+#pydev_path = "/Applications/Eclipse/plugins/org.python.pydev_3.6.0.201406232321/pysrc/
+
 # Windows
 #pydev_path = "C:/Program Files/eclipse/plugins/org.python.pydev.debug_2.4.0.2012020116/pysrc"
 

@@ -1,3 +1,4 @@
+#!/bin/sh
 
-$BLENDER_DIR/blender ./blend/audiosculpture-rig.blend
-
+. ./blendenv.sh
+$BLENDER_DIR/blender
