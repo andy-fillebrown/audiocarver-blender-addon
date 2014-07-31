@@ -262,7 +262,7 @@ def add_circular_ring_note_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
 
-     # Calculate the note's location on the ring.
+    # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
     y = sin(pitch_angle)
