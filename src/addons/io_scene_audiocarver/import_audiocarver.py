@@ -5,6 +5,7 @@ import xml.dom as Dom
 import xml.dom.minidom as Xml
 import time
 from math import *
+import sys
 
 note_suffix_number = 2
 note_layer = 18
@@ -38,6 +39,11 @@ class Note:
     _duration = -1
     _velocity = -1
     _pitch = -1
+
+
+def print_message(message):
+    print(message);
+    sys.stdout.flush();
 
 
 def clear_ss():
@@ -299,7 +305,7 @@ def add_spiral_ring_note_to_mesh(note, mesh):
 
 def import_note(note_node, note_mesh):
     if "Note" != note_node.nodeName:
-        print("Xml node is not a note.")
+        print_message("Xml node is not a note.")
         return
 
     # Get the first and last pitch point positions.
@@ -375,7 +381,7 @@ def import_track(track_node):
             track_name = attribute.value
         i += 1
 
-    print(" \"" + track_name + "\"")
+    print_message(" \"" + track_name + "\"")
 
     # Create the track's note material.
     note_material = create_note_material(color)
@@ -461,7 +467,7 @@ def import_timeline(timeline_node):
 def import_timelines(timelines_node):
     global timeline_layer
 
-    print("\nImporting time lines ...")
+    print_message("\nImporting time lines ...")
 
     bpy.context.scene.layers[timeline_layer] = True
     bpy.context.scene.layers[timeline_text_layer] = True
@@ -552,7 +558,7 @@ def create_pitch_lines():
     global pitch_min
     global pitch_max
 
-    print("\nCreating pitch lines ...")
+    print_message("\nCreating pitch lines ...")
 
     # Create pitch line text objects for each note in the note pitch range.
     i = pitch_min
@@ -619,7 +625,7 @@ def load(operator,
     global track_count
     global track_scale
 
-    print("\nImporting AudioCarver file", file_name, "...")
+    print_message("\nImporting AudioCarver file" + file_name + "...")
 
     start_time = time.time()
 
@@ -640,7 +646,7 @@ def load(operator,
     # Set the track scale.
     track_scale = bpy.data.objects[".Track.Scale.X"].scale[0]
 
-    print("\nImporting tracks ...")
+    print_message("\nImporting tracks ...")
     track_count = 1
 
     dom = Xml.parse(file_name)
@@ -663,7 +669,7 @@ def load(operator,
 
     # Delete the time line template object if no time lines were imported.
     if (not timeline_imported):
-        print("\nNo time lines imported.")
+        print_message("\nNo time lines imported.")
         clear_ss()
         bpy.data.objects["TimeLine.0"].select = True
         bpy.data.objects["TimeLine.Text.0"].select = True
@@ -678,6 +684,6 @@ def load(operator,
         obj.select = True
     bpy.context.scene.objects.active = cur_active_obj
 
-    print("\n... done in %.3f seconds\n" % (time.time() - start_time))
+    print_message("\n... done in %.3f seconds\n" % (time.time() - start_time))
 
     return {'FINISHED'}
