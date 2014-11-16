@@ -20,9 +20,9 @@ track_scale = 1.0
 pitch_min = 128
 pitch_max = 0
 
-verts_per_second = 0 # use "0" to get start and end points only
+verts_per_second = 32 # use "0" to get start and end points only
 verts_per_ring = 32
-max_note_thickness = 0.02
+max_note_thickness = 0.075
 
 angle_start = 30 / 180 * pi
 angle_end = 330 / 180 * pi
@@ -65,36 +65,37 @@ def to_zero_prefixed_string(number):
 
 
 def create_note_material(color = "#ffffff"):
-    template_material = bpy.data.materials["Note.Material.0"]
-    note_material = template_material.copy()
-    note_material.name = "Note.Material." + str(track_count)
-    note_material.diffuse_color[0] = float((16 * int(color[1:2], 16)) + int(color[2:3], 16)) / 255.0
-    note_material.diffuse_color[1] = float((16 * int(color[3:4], 16)) + int(color[4:5], 16)) / 255.0
-    note_material.diffuse_color[2] = float((16 * int(color[5:6], 16)) + int(color[6:7], 16)) / 255.0
-    r_is_zero = 0.0 == note_material.diffuse_color[0]
-    g_is_zero = 0.0 == note_material.diffuse_color[1]
-    b_is_zero = 0.0 == note_material.diffuse_color[2]
-    if r_is_zero:
-        if g_is_zero or b_is_zero:
-            note_material.diffuse_color[0] = 0.0005
-        else:
-            note_material.diffuse_color[0] = 0.001
-    if g_is_zero:
-        if r_is_zero or b_is_zero:
-            note_material.diffuse_color[1] = 0.0005
-        else:
-            note_material.diffuse_color[1] = 0.001
-    if b_is_zero:
-        if r_is_zero or g_is_zero:
-            note_material.diffuse_color[2] = 0.0005
-        else:
-            note_material.diffuse_color[2] = 0.001
-    if set_cycles_material_color:
-        note_material.node_tree.nodes['Glass BSDF'].inputs['Color'].default_value = (note_material.diffuse_color[0],
-                                                                                     note_material.diffuse_color[1],
-                                                                                     note_material.diffuse_color[2],
-                                                                                     1.0)
-    return note_material
+    return bpy.data.materials["Note.Material.0"]
+#     template_material = bpy.data.materials["Note.Material.0"]
+#     note_material = template_material.copy()
+#     note_material.name = "Note.Material." + str(track_count)
+#     note_material.diffuse_color[0] = float((16 * int(color[1:2], 16)) + int(color[2:3], 16)) / 255.0
+#     note_material.diffuse_color[1] = float((16 * int(color[3:4], 16)) + int(color[4:5], 16)) / 255.0
+#     note_material.diffuse_color[2] = float((16 * int(color[5:6], 16)) + int(color[6:7], 16)) / 255.0
+#     r_is_zero = 0.0 == note_material.diffuse_color[0]
+#     g_is_zero = 0.0 == note_material.diffuse_color[1]
+#     b_is_zero = 0.0 == note_material.diffuse_color[2]
+#     if r_is_zero:
+#         if g_is_zero or b_is_zero:
+#             note_material.diffuse_color[0] = 0.0005
+#         else:
+#             note_material.diffuse_color[0] = 0.001
+#     if g_is_zero:
+#         if r_is_zero or b_is_zero:
+#             note_material.diffuse_color[1] = 0.0005
+#         else:
+#             note_material.diffuse_color[1] = 0.001
+#     if b_is_zero:
+#         if r_is_zero or g_is_zero:
+#             note_material.diffuse_color[2] = 0.0005
+#         else:
+#             note_material.diffuse_color[2] = 0.001
+#     if set_cycles_material_color:
+#         note_material.node_tree.nodes['Glass BSDF'].inputs['Color'].default_value = (note_material.diffuse_color[0],
+#                                                                                      note_material.diffuse_color[1],
+#                                                                                      note_material.diffuse_color[2],
+#                                                                                      1.0)
+#     return note_material
 
 
 def add_round_note_shape_to_mesh(note, position, mesh):
@@ -359,8 +360,8 @@ def import_note(note_node, note_mesh):
     note._velocity = velocity
     note._pitch = first_pt_y
 
-    #add_circular_ring_note_to_mesh(note, note_mesh)
-    add_flat_note_to_mesh(note, note_mesh)
+    add_circular_ring_note_to_mesh(note, note_mesh)
+    #add_flat_note_to_mesh(note, note_mesh)
     #add_spiral_ring_note_to_mesh(note, note_mesh)
 
 
