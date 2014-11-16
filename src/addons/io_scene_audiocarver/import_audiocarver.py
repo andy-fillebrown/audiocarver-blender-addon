@@ -677,7 +677,7 @@ def load(operator,
         bpy.ops.object.delete()
 
     # Create pitch lines
-    #create_pitch_lines()
+    create_pitch_lines()
 
     # Restore the original selection set.
     clear_ss()
