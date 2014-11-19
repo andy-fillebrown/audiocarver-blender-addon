@@ -23,7 +23,7 @@ pitch_max = 0
 
 verts_per_second = 1 # use "0" to get start and end points only
 verts_per_ring = 32
-max_note_thickness = 0.075
+max_note_thickness = 0.05
 
 angle_start = 30 / 180 * pi
 angle_end = 330 / 180 * pi
