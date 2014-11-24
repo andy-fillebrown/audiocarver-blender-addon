@@ -669,14 +669,6 @@ def load(operator,
     note_template_object.select = True
     bpy.ops.object.delete()
 
-    # Delete the time line template object if no time lines were imported.
-    if (not timeline_imported):
-        print_message("\nNo time lines imported.")
-        clear_ss()
-        bpy.data.objects["TimeLine.0"].select = True
-        bpy.data.objects["TimeLine.Text.0"].select = True
-        bpy.ops.object.delete()
-
     # Create pitch lines
     create_pitch_lines()
 
