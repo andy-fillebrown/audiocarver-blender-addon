@@ -29,6 +29,7 @@ verts_per_second = 0 # use "0" to get start and end points only
 verts_per_ring = 32
 max_note_thickness = 0.025
 #max_note_thickness = 0.25
+min_note_duration = 0.2
 
 angle_start = 30 / 180 * pi
 angle_end = 330 / 180 * pi
@@ -342,6 +343,9 @@ def import_note(note_node, note_mesh):
     first_pt_x = track_scale * float(first_pt_pos_value[0])
     first_pt_y = float(first_pt_pos_value[1])
     duration = (track_scale * float(last_pt_pos_value[0])) - first_pt_x
+    if (duration < min_note_duration):
+        print("note duration changed from " + str(duration) + " to " + str(min_note_duration))
+        duration = min_note_duration
 
     # Get the note's velocity/volume.
     velocity = 1.0
