@@ -27,15 +27,15 @@ velocity_scale = 1.0
 #verts_per_second = 1 # use "0" to get start and end points only
 verts_per_second = 0 # use "0" to get start and end points only
 verts_per_ring = 32
-#max_note_thickness = 0.025
-max_note_thickness = 0.25
+max_note_thickness = 0.025
+#max_note_thickness = 0.25
 
 angle_start = 30 / 180 * pi
 angle_end = 330 / 180 * pi
 angle_increment = 0.0
 
-#note_range_distance = 5.0
-note_range_distance = 4.0
+note_range_distance = 5.0
+#note_range_distance = 4.0
 
 timeline_imported = False
 
@@ -359,8 +359,8 @@ def import_note(note_node, note_mesh):
     note._velocity = 0.01 + (velocity_scale * (velocity - velocity_min))
     note._pitch = first_pt_y
 
-    #add_circular_ring_note_to_mesh(note, note_mesh)
-    add_flat_note_to_mesh(note, note_mesh)
+    add_circular_ring_note_to_mesh(note, note_mesh)
+    #add_flat_note_to_mesh(note, note_mesh)
     #add_spiral_ring_note_to_mesh(note, note_mesh)
 
 
@@ -616,6 +616,12 @@ def create_pitch_lines():
             y_offset = bbox[0][0] + (bbox[4][0] - bbox[0][0])
             obj.location[1] += y_offset
             obj.location[2] -= x_offset
+            
+            # Convert pitch line text to mesh.
+            clear_ss()
+            bpy.data.objects[obj.name].select = True
+            bpy.context.scene.objects.active = bpy.data.objects[obj.name]
+            bpy.ops.object.convert(target = 'MESH')
 
         i += 1
 
