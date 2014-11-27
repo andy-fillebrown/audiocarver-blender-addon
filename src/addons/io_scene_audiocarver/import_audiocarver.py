@@ -20,16 +20,22 @@ track_scale = 1.0
 
 pitch_min = 128
 pitch_max = 0
+velocity_min = 1.0
+velocity_max = 0.0
+velocity_scale = 1.0
 
-verts_per_second = 1 # use "0" to get start and end points only
+#verts_per_second = 1 # use "0" to get start and end points only
+verts_per_second = 0 # use "0" to get start and end points only
 verts_per_ring = 32
-max_note_thickness = 0.025
+#max_note_thickness = 0.025
+max_note_thickness = 0.25
 
 angle_start = 30 / 180 * pi
 angle_end = 330 / 180 * pi
 angle_increment = 0.0
 
-note_range_distance = 5.0
+#note_range_distance = 5.0
+note_range_distance = 4.0
 
 timeline_imported = False
 
@@ -135,99 +141,91 @@ def add_round_note_shape_to_mesh(note, position, mesh):
         current_thickness = next_thickness
 
 
-# def add_square_note_shape_to_mesh(note, position, mesh):
-#     x = note._startTime
-#     y = position[0]
-#     z = position[1]
-#     note_width = note_range_distance / (pitch_max - pitch_min)
-#     half_note_width = note_width / 2.0
-# 
-#     mesh_verts = mesh.verts
-#     mesh_faces = mesh.faces
-# 
-#     x_increment = 10000000000000
-#     if (0.0 < verts_per_second):
-#         x_increment = 1.0 / verts_per_second;
-# 
-#     x1 = 0.0
-#     current_thickness = max_note_thickness
-# 
-#     # front
-#     y1 = y - half_note_width
-#     y2 = y + half_note_width
-#     z1 = z - (note._velocity * current_thickness)
-#     z2 = z + (note._velocity * current_thickness)
-#     v1 = mesh_verts.new((x, y1, z1))
-#     v2 = mesh_verts.new((x, y1, z2))
-#     v3 = mesh_verts.new((x, y2, z2))
-#     v4 = mesh_verts.new((x, y2, z1))
-#     mesh_faces.new((v1, v2, v3, v4))
-# 
-#     while (x1 < note._duration):
-#         x2 = x1 + x_increment
-#         if (note._duration < x2):
-#             x2 = note._duration
-#         next_thickness = (1.0 - (x2 / (2 * note._duration))) * max_note_thickness
-# 
-#         # top
-#         y1 = y - half_note_width
-#         y2 = y + half_note_width
-#         z1 = z + (note._velocity * current_thickness)
-#         z2 = z + (note._velocity * next_thickness)
-#         v1 = mesh_verts.new((x + x1, y1, z1))
-#         v2 = mesh_verts.new((x + x2, y1, z2))
-#         v3 = mesh_verts.new((x + x2, y2, z2))
-#         v4 = mesh_verts.new((x + x1, y2, z1))
-#         mesh_faces.new((v1, v2, v3, v4))
-# 
-#         # right
-#         y1 = y + half_note_width
-#         z1 = z + (note._velocity * current_thickness)
-#         z2 = z - (note._velocity * current_thickness)
-#         z3 = z + (note._velocity * next_thickness)
-#         z4 = z - (note._velocity * next_thickness)
-#         v1 = mesh_verts.new((x + x1, y1, z1))
-#         v2 = mesh_verts.new((x + x2, y1, z3))
-#         v3 = mesh_verts.new((x + x2, y1, z4))
-#         v4 = mesh_verts.new((x + x1, y1, z2))
-#         mesh_faces.new((v1, v2, v3, v4))
-# 
-#         # bottom
-#         y1 = y - half_note_width
-#         y2 = y + half_note_width
-#         z1 = z - (note._velocity * current_thickness)
-#         z2 = z - (note._velocity * next_thickness)
-#         v1 = mesh_verts.new((x + x1, y2, z1))
-#         v2 = mesh_verts.new((x + x2, y2, z2))
-#         v3 = mesh_verts.new((x + x2, y1, z2))
-#         v4 = mesh_verts.new((x + x1, y1, z1))
-#         mesh_faces.new((v1, v2, v3, v4))
-# 
-#         # left
-#         y1 = y - half_note_width
-#         z1 = z + (note._velocity * current_thickness)
-#         z2 = z - (note._velocity * current_thickness)
-#         z3 = z + (note._velocity * next_thickness)
-#         z4 = z - (note._velocity * next_thickness)
-#         v1 = mesh_verts.new((x + x1, y1, z2))
-#         v2 = mesh_verts.new((x + x2, y1, z4))
-#         v3 = mesh_verts.new((x + x2, y1, z3))
-#         v4 = mesh_verts.new((x + x1, y1, z1))
-#         mesh_faces.new((v1, v2, v3, v4))
-# 
-#         x1 = x2
-#         current_thickness = next_thickness
-# 
-#     # back
-#     y1 = y - half_note_width
-#     y2 = y + half_note_width
-#     z1 = z - (note._velocity * current_thickness)
-#     z2 = z + (note._velocity * current_thickness)
-#     v1 = mesh_verts.new((x + x1, y2, z1))
-#     v2 = mesh_verts.new((x + x1, y2, z2))
-#     v3 = mesh_verts.new((x + x1, y1, z2))
-#     v4 = mesh_verts.new((x + x1, y1, z1))
-#     mesh_faces.new((v1, v2, v3, v4))
+def add_square_note_shape_to_mesh(note, position, mesh):
+    x = note._startTime
+    y = -position[0]
+    z = position[1]
+    note_width = note_range_distance / (pitch_max - pitch_min)
+    half_note_width = note_width / 2.0
+ 
+    mesh_verts = mesh.verts
+    mesh_faces = mesh.faces
+ 
+    x_increment = 10000000000000
+    if (0.0 < verts_per_second):
+        x_increment = 1.0 / verts_per_second;
+ 
+    x1 = 0.0
+    current_thickness = max_note_thickness
+ 
+    # front
+    y1 = y - half_note_width
+    y2 = y + half_note_width
+    z2 = z - (note._velocity * current_thickness)
+    v1 = mesh_verts.new((x, y1, z))
+    v2 = mesh_verts.new((x, y1, z2))
+    v3 = mesh_verts.new((x, y2, z2))
+    v4 = mesh_verts.new((x, y2, z))
+    mesh_faces.new((v1, v2, v3, v4))
+ 
+    while (x1 < note._duration):
+        x2 = x1 + x_increment
+        if (note._duration < x2):
+            x2 = note._duration
+        next_thickness = (1.0 - (x2 / (2 * note._duration))) * max_note_thickness
+ 
+        # top
+        y1 = y - half_note_width
+        y2 = y + half_note_width
+        z1 = z - (note._velocity * current_thickness)
+        z2 = z - (note._velocity * next_thickness)
+        v1 = mesh_verts.new((x + x1, y1, z1))
+        v2 = mesh_verts.new((x + x2, y1, z2))
+        v3 = mesh_verts.new((x + x2, y2, z2))
+        v4 = mesh_verts.new((x + x1, y2, z1))
+        mesh_faces.new((v1, v2, v3, v4))
+ 
+        # right
+        y1 = y + half_note_width
+        z1 = z - (note._velocity * current_thickness)
+        z2 = z - (note._velocity * next_thickness)
+        v1 = mesh_verts.new((x + x1, y1, z1))
+        v2 = mesh_verts.new((x + x2, y1, z2))
+        v3 = mesh_verts.new((x + x2, y1, z))
+        v4 = mesh_verts.new((x + x1, y1, z))
+        mesh_faces.new((v1, v2, v3, v4))
+ 
+        # bottom
+        y1 = y - half_note_width
+        y2 = y + half_note_width
+        v1 = mesh_verts.new((x + x1, y2, z))
+        v2 = mesh_verts.new((x + x2, y2, z))
+        v3 = mesh_verts.new((x + x2, y1, z))
+        v4 = mesh_verts.new((x + x1, y1, z))
+        mesh_faces.new((v1, v2, v3, v4))
+ 
+        # left
+        y1 = y - half_note_width
+        z1 = z - (note._velocity * current_thickness)        #z2 = z - (note._velocity * current_thickness)
+        z2 = z - (note._velocity * next_thickness)        #z4 = z - (note._velocity * next_thickness)
+        v1 = mesh_verts.new((x + x1, y1, z))
+        v2 = mesh_verts.new((x + x2, y1, z))
+        v3 = mesh_verts.new((x + x2, y1, z2))
+        v4 = mesh_verts.new((x + x1, y1, z1))
+        mesh_faces.new((v1, v2, v3, v4))
+ 
+        x1 = x2
+        current_thickness = next_thickness
+ 
+    # back
+    y1 = y - half_note_width
+    y2 = y + half_note_width    #z1 = z - (note._velocity * current_thickness)
+    z1 = z - (note._velocity * current_thickness)
+    v1 = mesh_verts.new((x + x1, y2, z))
+    v2 = mesh_verts.new((x + x1, y2, z1))
+    v3 = mesh_verts.new((x + x1, y1, z1))
+    v4 = mesh_verts.new((x + x1, y1, z))
+    mesh_faces.new((v1, v2, v3, v4))
 
 
 # def add_arc_note_shape_to_mesh(note, start_radius, start_angle, end_radius, end_angle, mesh):
@@ -279,15 +277,15 @@ def add_circular_ring_note_to_mesh(note, mesh):
     add_round_note_shape_to_mesh(note, (y, z), mesh)
 
 
-# def add_flat_note_to_mesh(note, mesh):
-#     global pitch_min
-#     global pitch_max
-#     y = 0
-#     z = -0.1 * track_count
-#     pitch_offset = note._pitch - pitch_min
-#     if (0.0 < pitch_offset):
-#         y = -(note_range_distance / 2.0) + (pitch_offset * (note_range_distance / (pitch_max - pitch_min)))
-#     add_square_note_shape_to_mesh(note, (y, z), mesh)
+def add_flat_note_to_mesh(note, mesh):
+    global pitch_min
+    global pitch_max
+    y = 0
+    z = -0.1 * track_count
+    pitch_offset = note._pitch - pitch_min
+    if (0.0 < pitch_offset):
+        y = -(note_range_distance / 2.0) + (pitch_offset * (note_range_distance / (pitch_max - pitch_min)))
+    add_square_note_shape_to_mesh(note, (y, z), mesh)
 
 
 # def add_spiral_ring_note_to_mesh(note, mesh):
@@ -358,11 +356,11 @@ def import_note(note_node, note_mesh):
     note = Note()
     note._startTime = first_pt_x
     note._duration = duration
-    note._velocity = velocity
+    note._velocity = 0.01 + (velocity_scale * (velocity - velocity_min))
     note._pitch = first_pt_y
 
-    add_circular_ring_note_to_mesh(note, note_mesh)
-    #add_flat_note_to_mesh(note, note_mesh)
+    #add_circular_ring_note_to_mesh(note, note_mesh)
+    add_flat_note_to_mesh(note, note_mesh)
     #add_spiral_ring_note_to_mesh(note, note_mesh)
 
 
@@ -479,10 +477,12 @@ def import_timelines(timelines_node):
             import_timeline(child_node)
 
 
-def update_pitch_range(xml_node):
+def update_ranges(xml_node):
     global angle_increment
     global pitch_min
     global pitch_max
+    global velocity_min
+    global velocity_max
 
     if Dom.Node.TEXT_NODE == xml_node.nodeType:
         return
@@ -491,6 +491,17 @@ def update_pitch_range(xml_node):
             if "NoteList" == child_node.nodeName:
                 for note_node in child_node.childNodes:
                     if "Note" == note_node.nodeName:
+                        volume = 0
+                        i = 0
+                        while i < note_node.attributes.length:
+                            attribute = note_node.attributes.item(i)
+                            if "volume" == attribute.name:
+                                volume = float(attribute.value)
+                                break
+                        if (volume < velocity_min):
+                            velocity_min = volume
+                        if (velocity_max < volume):
+                            velocity_max = volume
                         pitch_curve_node = Dom.Node
                         first_pt_node = Dom.Node
 #                         last_pt_node = Dom.Node
@@ -518,7 +529,7 @@ def update_pitch_range(xml_node):
                             pitch_max = pitch
     else:
         for child_node in xml_node.childNodes:
-            update_pitch_range(child_node)
+            update_ranges(child_node)
 
 
 def import_node(xml_node):
@@ -623,6 +634,9 @@ def load(operator,
     global note_template_object
     global pitch_min
     global pitch_max
+    global velocity_min
+    global velocity_max
+    global velocity_scale
     global timeline_imported
     global track_count
     global track_scale
@@ -653,9 +667,10 @@ def load(operator,
 
     dom = Xml.parse(file_name)
 
-    # Read all nodes and update pitch range.
+    # Read all nodes and update pitch and velocity ranges.
     for xml_node in dom.childNodes:
-        update_pitch_range(xml_node)
+        update_ranges(xml_node)
+    velocity_scale = (velocity_max - velocity_min) / (1.0 - velocity_min)
 
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
