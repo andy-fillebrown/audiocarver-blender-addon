@@ -73,7 +73,7 @@ def to_zero_prefixed_string(number):
 
 
 def create_note_material(color = "#ffffff"):
-    return bpy.data.materials["Note.Material.0"]
+    return bpy.data.materials["Note.Material.Main"]
 #     template_material = bpy.data.materials["Note.Material.0"]
 #     note_material = template_material.copy()
 #     note_material.name = "Note.Material." + str(track_count)
@@ -396,7 +396,7 @@ def import_track(track_node):
     bpy.ops.object.duplicate()
 
     # Rename the new note object.
-    note_object = bpy.data.objects["Note.001"]
+    note_object = bpy.data.objects["Note.Main.001"]
     note_object.name = note_object.name[0 : -3] + to_zero_prefixed_string(note_suffix_number)
 
     # Set the note mesh materials.
@@ -667,7 +667,7 @@ def load(operator,
     bpy.context.scene.layers[note_layer] = True
 
     # Set the note template object.
-    note_template_object = bpy.data.objects["Note.0"]
+    note_template_object = bpy.data.objects["Note.Main"]
 
     # Set the track scale.
     track_scale = bpy.data.objects[".Track.Scale.X"].scale[0]
