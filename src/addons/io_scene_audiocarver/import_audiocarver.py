@@ -549,93 +549,6 @@ def import_node(xml_node):
             import_node(child_node)
 
 
-def note_string(note_number):
-    mod = int(note_number) % 12
-    if 0 == mod:
-        return "C"
-    if 2 == mod:
-        return "D"
-    if 4 == mod:
-        return "E"
-    if 5 == mod:
-        return "F"
-    if 7 == mod:
-        return "G"
-    if 9 == mod:
-        return "A"
-    if 11 == mod:
-        return "B"
-    return ""
-
-
-def create_pitch_lines():
-    global angle_increment
-    global angle_start
-    global angle_end
-    global pitch_min
-    global pitch_max
-
-    print_message("\nCreating pitch lines ...")
-
-    # Create pitch line text objects for each note in the note pitch range.
-    i = pitch_min
-    while i <= pitch_max:
-        angle = angle_start + (angle_increment * (pitch_max - i))
-        x = sin(angle)
-        y = cos(angle)
-
-        i_string = str(int(i))
-        text_string = note_string(i)
-        has_text = "" != text_string
-
-        # Duplicate pitch line text template objects.
-        clear_ss()
-        bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
-        bpy.ops.object.duplicate()
-
-        # Setup pitch line text arrow.
-        obj = bpy.data.objects["PitchLine.Text.Arrow.001"]
-        obj.rotation_euler[0] = -angle
-        obj.location[1] = x
-        obj.location[2] = y
-        obj.name = "PitchLine.Text.Arrow.." + i_string
-
-        if has_text:
-            clear_ss()
-            bpy.data.objects["PitchLine.Text.0"].select = True
-            bpy.ops.object.duplicate()
-
-            radius = 1.1
-            location = (0, radius * sin(angle), radius * cos(angle))
-
-            # Setup pitch line text.
-            obj = bpy.data.objects["PitchLine.Text.001"]
-            obj.location = location
-            obj.data.body = note_string(i)
-            obj.name = "PitchLine.Text.." + i_string
-
-            # Center pitch line text.
-            bbox = obj.bound_box
-            x_offset = bbox[0][1] + ((bbox[2][1] - bbox[0][1]) / 2.0)
-            y_offset = bbox[0][0] + (bbox[4][0] - bbox[0][0])
-            obj.location[1] += y_offset
-            obj.location[2] -= x_offset
-            
-            # Convert pitch line text to mesh.
-            clear_ss()
-            bpy.data.objects[obj.name].select = True
-            bpy.context.scene.objects.active = bpy.data.objects[obj.name]
-            bpy.ops.object.convert(target = 'MESH')
-
-        i += 1
-
-    # Delete pitch line text template objects.
-    clear_ss()
-    bpy.data.objects["PitchLine.Text.0"].select = True
-    bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
-    bpy.ops.object.delete()
-
-
 def load(operator,
          context,
          file_name):
@@ -693,9 +606,6 @@ def load(operator,
     clear_ss()
     note_template_object.select = True
     bpy.ops.object.delete()
-
-    # Create pitch lines
-    create_pitch_lines()
 
     # Restore the original selection set.
     clear_ss()
