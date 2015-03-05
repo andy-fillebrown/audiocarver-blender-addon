@@ -12,7 +12,7 @@ note_suffix_number = 2
 note_layer = 18
 note_scale = 0.01
 note_template_object = None
-track_count = 1
+track_count = 1.0
 timeline_count = 0
 timeline_layer = 17
 timeline_text_layer = 16
@@ -272,8 +272,9 @@ def add_circular_ring_note_to_mesh(note, mesh):
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    y = sin(pitch_angle)
-    z = cos(pitch_angle)
+    track_offset = 1.0 + (track_count / 10.0)
+    y = track_offset * sin(pitch_angle)
+    z = track_offset * cos(pitch_angle)
  
     add_round_note_shape_to_mesh(note, (y, z), mesh)
 
