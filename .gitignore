@@ -18,3 +18,7 @@ scripts/__debug__.py
 scripts/__debug__.sh
 blendenv.bat
 blendenv.sh
+
+# CLI import .blend output
+# ------------------------
+src/testing/*.blend
