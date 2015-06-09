@@ -6,6 +6,7 @@ import xml.dom.minidom as Xml
 import time
 #from math import *
 from math import pi, sin, cos
+import os.path
 import sys
 
 note_suffix_number = 2
@@ -565,7 +566,8 @@ def load(operator,
     global track_count
     global track_scale
 
-    print_message("\nImporting AudioCarver file" + file_name + "...")
+    dir_name = os.path.dirname(file_name)
+    print_message("\nImporting Csound Log Directory" + dir_name + "...")
 
     start_time = time.time()
 
@@ -589,7 +591,10 @@ def load(operator,
     print_message("\nImporting tracks ...")
     track_count = 1
 
-    dom = Xml.parse(file_name)
+    for file in os.listdir(dir_name):
+        if (file.endswith(".txt")):
+            print(file)
+    return {'FINISHED'}
 
     # Read all nodes and update pitch and velocity ranges.
     for xml_node in dom.childNodes:
