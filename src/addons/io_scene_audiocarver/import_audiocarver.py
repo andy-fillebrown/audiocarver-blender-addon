@@ -2,12 +2,16 @@
 import bmesh
 import bpy
 import xml.dom as Dom
-import xml.dom.minidom as Xml
 import time
-#from math import *
 from math import pi, sin, cos
 import os.path
 import sys
+
+dir_name = ''
+
+pitch_id = 0
+modulation_wheel_id = 1
+volume_id = 7
 
 note_suffix_number = 2
 note_layer = 18
@@ -21,8 +25,6 @@ track_scale = 1.0
 
 pitch_min = 128
 pitch_max = 0
-velocity_min = 1.0
-velocity_max = 0.0
 velocity_scale = 1.0
 
 #verts_per_second = 1 # use "0" to get start and end points only
@@ -483,59 +485,21 @@ def import_timelines(timelines_node):
             import_timeline(child_node)
 
 
-def update_ranges(xml_node):
-    global angle_increment
+def update_ranges(file_name):
     global pitch_min
     global pitch_max
-    global velocity_min
-    global velocity_max
-
-    if Dom.Node.TEXT_NODE == xml_node.nodeType:
-        return
-    if "Track" == xml_node.nodeName:
-        for child_node in xml_node.childNodes:
-            if "NoteList" == child_node.nodeName:
-                for note_node in child_node.childNodes:
-                    if "Note" == note_node.nodeName:
-                        volume = 0
-                        i = 0
-                        while i < note_node.attributes.length:
-                            attribute = note_node.attributes.item(i)
-                            if "volume" == attribute.name:
-                                volume = float(attribute.value)
-                                break
-                        if (volume < velocity_min):
-                            velocity_min = volume
-                        if (velocity_max < volume):
-                            velocity_max = volume
-                        pitch_curve_node = Dom.Node
-                        first_pt_node = Dom.Node
-#                         last_pt_node = Dom.Node
-                        first_pt_pos_value = 0
-#                         last_pt_pos_value = 0
-                        for child_node in note_node.childNodes:
-                            if "PitchCurve" == child_node.nodeName:
-                                pitch_curve_node = child_node
-                                break
-                        for point_node in pitch_curve_node.childNodes:
-                            if "Point" == point_node.nodeName:
-                                first_pt_node = point_node
-                                break
-                        i = 0
-                        while i < first_pt_node.attributes.length:
-                            attribute = first_pt_node.attributes.item(i)
-                            if "position" == attribute.name:
-                                first_pt_pos_value = attribute.value.split(" ")
-                                break
-                            i += 1
-                        pitch = float(first_pt_pos_value[1])
-                        if (pitch < pitch_min):
-                            pitch_min = pitch
-                        if (pitch_max < pitch):
-                            pitch_max = pitch
-    else:
-        for child_node in xml_node.childNodes:
-            update_ranges(child_node)
+    
+    # Read each line in the file and update global max and min values.
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        line_id = float(line[0])
+        line_value = float(line[2])
+        if (pitch_id == line_id):
+            if (line_value < pitch_min):
+                pitch_min = line_value
+            if (pitch_max < line_value):
+                pitch_max = line_value
 
 
 def import_node(xml_node):
@@ -555,6 +519,7 @@ def load(operator,
          context,
          file_name):
     global angle_increment
+    global dir_name
     global note_layer
     global note_template_object
     global pitch_min
@@ -566,8 +531,8 @@ def load(operator,
     global track_count
     global track_scale
 
-    dir_name = os.path.dirname(file_name)
-    print_message("\nImporting Csound Log Directory" + dir_name + "...")
+    dir_name = os.path.dirname(file_name) + '/'
+    print_message("\nImporting Csound Log Directory" + dir_name + "/ ...")
 
     start_time = time.time()
 
@@ -593,8 +558,18 @@ def load(operator,
 
     for file in os.listdir(dir_name):
         if (file.endswith(".txt")):
-            print(file)
+            file_info = file.split('-')
+            #note_id = int(file_info[1])
+            note_number = int(file_info[4].split('.')[0])
+            # Skip the first note.  It's only a time reference.
+            if (1 < note_number):
+                #print("\nid: " + str(note_id) + " note: " + str(note_number))
+                update_ranges(file)
+    
+    #print("\npitch min: " + str(pitch_min) + " pitch max: " + str(pitch_max))
+    
     return {'FINISHED'}
+
 
     # Read all nodes and update pitch and velocity ranges.
     for xml_node in dom.childNodes:
