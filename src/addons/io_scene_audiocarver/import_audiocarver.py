@@ -7,6 +7,8 @@ from math import pi, sin, cos
 import os.path
 import sys
 
+current_track = 0
+current_track_start_time = 0
 dir_name = ''
 
 pitch_id = 0
@@ -75,38 +77,8 @@ def to_zero_prefixed_string(number):
     return zero_prefixed_string
 
 
-def create_note_material(color = "#ffffff"):
-    return bpy.data.materials["Note.Material.Main"]
-#     template_material = bpy.data.materials["Note.Material.0"]
-#     note_material = template_material.copy()
-#     note_material.name = "Note.Material." + str(track_count)
-#     note_material.diffuse_color[0] = float((16 * int(color[1:2], 16)) + int(color[2:3], 16)) / 255.0
-#     note_material.diffuse_color[1] = float((16 * int(color[3:4], 16)) + int(color[4:5], 16)) / 255.0
-#     note_material.diffuse_color[2] = float((16 * int(color[5:6], 16)) + int(color[6:7], 16)) / 255.0
-#     r_is_zero = 0.0 == note_material.diffuse_color[0]
-#     g_is_zero = 0.0 == note_material.diffuse_color[1]
-#     b_is_zero = 0.0 == note_material.diffuse_color[2]
-#     if r_is_zero:
-#         if g_is_zero or b_is_zero:
-#             note_material.diffuse_color[0] = 0.0005
-#         else:
-#             note_material.diffuse_color[0] = 0.001
-#     if g_is_zero:
-#         if r_is_zero or b_is_zero:
-#             note_material.diffuse_color[1] = 0.0005
-#         else:
-#             note_material.diffuse_color[1] = 0.001
-#     if b_is_zero:
-#         if r_is_zero or g_is_zero:
-#             note_material.diffuse_color[2] = 0.0005
-#         else:
-#             note_material.diffuse_color[2] = 0.001
-#     if set_cycles_material_color:
-#         note_material.node_tree.nodes['Glass BSDF'].inputs['Color'].default_value = (note_material.diffuse_color[0],
-#                                                                                      note_material.diffuse_color[1],
-#                                                                                      note_material.diffuse_color[2],
-#                                                                                      1.0)
-#     return note_material
+def get_note_material(track_number, chord_number):
+    return bpy.data.materials["Note.Material." + str(track_number) + "." + str(chord_number)]
 
 
 def add_round_note_shape_to_mesh(note, position, mesh):
@@ -421,70 +393,6 @@ def import_track(track_node):
     track_count += 1
 
 
-def import_timeline(timeline_node):
-    global timeline_count
-    global timeline_imported
-
-    if 0 == timeline_count:
-        timeline_count += 1
-        timeline_imported = True
-        return
-
-    timeline_label = ""
-    timeline_location = 0.0
-    attributes = timeline_node.attributes
-    i = 0
-    while i < attributes.length:
-        attribute = attributes.item(i)
-        if "label" == attribute.name:
-            timeline_label = attribute.value
-        elif "location" == attribute.name:
-            timeline_location = float(attribute.value)
-        i += 1
-
-    if "" == timeline_label:
-        return
-    if -1 != timeline_label.find("."):
-        return
-    if 0.0 == timeline_location:
-        return
-
-    timeline_count += 1
-    timeline_count_string = to_zero_prefixed_string(timeline_count + 1)
-
-    # Create the time line.
-    clear_ss()
-    bpy.data.objects["TimeLine.0"].select = True
-    bpy.ops.object.duplicate(linked = True)
-    timeline = bpy.data.objects["TimeLine.001"]
-    timeline.name = timeline.name[0:-3] + timeline_count_string
-    timeline.location[0] = timeline_location
-
-    # Create the time line text.
-    clear_ss()
-    bpy.data.objects["TimeLine.Text.0"].select = True
-    bpy.ops.object.duplicate(linked = False)
-    timeline_text = bpy.data.objects["TimeLine.Text.001"]
-    timeline_text.name = timeline_text.name[0:-3] + timeline_count_string
-    timeline_text.location[0] = timeline_location
-    timeline_text.data.body = timeline_label
-
-    timeline_imported = True
-
-
-def import_timelines(timelines_node):
-    global timeline_layer
-
-    print_message("\nImporting time lines ...")
-
-    bpy.context.scene.layers[timeline_layer] = True
-    bpy.context.scene.layers[timeline_text_layer] = True
-
-    for child_node in timelines_node.childNodes:
-        if "TimeGridLine" == child_node.nodeName:
-            import_timeline(child_node)
-
-
 def update_ranges(file_name):
     global pitch_min
     global pitch_max
@@ -502,23 +410,60 @@ def update_ranges(file_name):
                 pitch_max = line_value
 
 
-def import_node(xml_node):
-    if Dom.Node.TEXT_NODE == xml_node.nodeType:
-        return
-    if "Track" == xml_node.nodeName:
-        import_track(xml_node)
-    elif "TimeGridLineList" == xml_node.nodeName:
-        #import_timelines(xml_node)
-        return
-    else:
-        for child_node in xml_node.childNodes:
-            import_node(child_node)
+def update_current_track_start_time(file_name):
+    global current_track_start_time
+    
+    # Read the first line's time parameter.
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        current_track_start_time = float(line[1])
+    
+
+def import_file(file_name):
+    super_track = -1
+    if (11 == current_track or 12 == current_track):
+        super_track = 1
+    elif (13 == current_track or 14 == current_track):
+        super_track = 2
+    
+    chord = -1
+    start_time = -1
+    end_time = -1
+    pitch = -1
+    volume = -1
+
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        line_id = float(line[0])
+        line_time = float(line[1])
+        line_value = float(line[2])
+        if (-1 == start_time):
+            start_time = line_time
+        else:
+            end_time = line_time
+        if (pitch_id == line_id):
+            if (-1 == pitch):
+                pitch = line_value
+        elif (volume_id == line_id):
+            if (volume < line_value):
+                volume = line_value
+        elif (modulation_wheel_id == line_id):
+            if (-1 == chord):
+                chord = line_value
+
+    # TODO:
+    # Get material from super-track and chord.
+    # Get note object from track and chord, creating it if necessary.
+    # Add note to note object's mesh.
 
 
 def load(operator,
          context,
          file_name):
     global angle_increment
+    global current_track
     global dir_name
     global note_layer
     global note_template_object
@@ -531,14 +476,15 @@ def load(operator,
     global track_count
     global track_scale
 
+    # Reset global variables.
+    pitch_min = 128
+    pitch_max = 0
+    current_track = 0
+
     dir_name = os.path.dirname(file_name) + '/'
     print_message("\nImporting Csound Log Directory" + dir_name + "/ ...")
 
     start_time = time.time()
-
-    pitch_min = 128
-    pitch_max = 0
-    timeline_imported = False
 
     # Store the current selection set so it can be restored later.
     cur_active_obj = bpy.context.scene.objects.active
@@ -556,32 +502,28 @@ def load(operator,
     print_message("\nImporting tracks ...")
     track_count = 1
 
-    for file in os.listdir(dir_name):
-        if (file.endswith(".txt")):
-            file_info = file.split('-')
+    for file_name in os.listdir(dir_name):
+        if (file_name.endswith(".txt")):
+            file_info = file_name.split('-')
             #note_id = int(file_info[1])
             note_number = int(file_info[4].split('.')[0])
-            # Skip the first note.  It's only a time reference.
+            # The first note is the track time reference.  Skip it.
             if (1 < note_number):
-                #print("\nid: " + str(note_id) + " note: " + str(note_number))
-                update_ranges(file)
+                update_ranges(file_name)
     
-    #print("\npitch min: " + str(pitch_min) + " pitch max: " + str(pitch_max))
-    
-    return {'FINISHED'}
-
-
-    # Read all nodes and update pitch and velocity ranges.
-    for xml_node in dom.childNodes:
-        update_ranges(xml_node)
-    velocity_scale = (velocity_max - velocity_min) / (1.0 - velocity_min)
-
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
 
-    # Import tracks, notes, and time lines.
-    for xml_node in dom.childNodes:
-        import_node(xml_node)
+    # Import tracks and notes.
+    for file_name in os.listdir(dir_name):
+        if (file_name.endswith(".txt")):
+            file_info = file_name.split('-')
+            note_number = int(file_info[4].split('.')[0])
+            if (1 == note_number):
+                current_track = int(file_info[1])
+                update_current_track_start_time(file_name)
+            else:
+                import_file(file_name)
 
     # Delete the note template objects.
     clear_ss()
