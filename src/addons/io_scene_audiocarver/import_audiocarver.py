@@ -47,6 +47,16 @@ timeline_imported = False
 
 # set_cycles_material_color = True
 
+track_1_meshes = [];
+track_2_meshes = [];
+
+i = 0
+while i < 12:
+    track_1_meshes.append(bmesh.new())
+    track_2_meshes.append(bmesh.new())
+    i = i + 1
+
+
 class Note:
     _startTime = -1
     _duration = -1
@@ -77,8 +87,42 @@ def to_zero_prefixed_string(number):
     return zero_prefixed_string
 
 
+def get_note_object_name(track_number, chord_number):
+    return "Note.Main." + str(track_number) + "." + str(chord_number)
+
+
 def get_note_material(track_number, chord_number):
     return bpy.data.materials["Note.Material." + str(track_number) + "." + str(chord_number)]
+
+
+def get_note_object(track_number, chord_number):
+    note_material = get_note_material(track_number, chord_number)
+
+    note_object = None
+    note_object_name = get_note_object_name(track_number, chord_number)
+    if (note_object_name in bpy.data.objects.keys()):
+        note_object = bpy.data.objects[note_object_name]
+    else:
+        # Select and duplicate the note template object.
+        clear_ss()
+        note_template_object.select = True
+        bpy.ops.object.duplicate()
+
+        # Rename the new note object.
+        note_object = bpy.data.objects["Note.Main.001"]
+        note_object.name = note_object_name
+
+    # Set the note mesh materials.
+    note_object.material_slots[0].material = note_material
+
+    return note_object
+
+
+def get_note_mesh(track_number, chord_number):
+    if 1 == track_number:
+        return track_1_meshes[int(chord_number - 1)]
+    if 2 == track_number:
+        return track_2_meshes[int(chord_number - 1)]
 
 
 def add_round_note_shape_to_mesh(note, position, mesh):
@@ -280,119 +324,6 @@ def add_flat_note_to_mesh(note, mesh):
 #     add_arc_note_shape_to_mesh(note, start_radius, start_angle + 0.01, end_radius, end_angle - 0.01, mesh)
 
 
-def import_note(note_node, note_mesh):
-    if "Note" != note_node.nodeName:
-        print_message("Xml node is not a note.")
-        return
-
-    # Get the first and last pitch point positions.
-    pitch_curve_node = Dom.Node
-    first_pt_node = Dom.Node
-    last_pt_node = Dom.Node
-    first_pt_pos_value = 0
-    last_pt_pos_value = 0
-    for child_node in note_node.childNodes:
-        if "PitchCurve" == child_node.nodeName:
-            pitch_curve_node = child_node
-            break
-    for point_node in pitch_curve_node.childNodes:
-        if "Point" == point_node.nodeName:
-            first_pt_node = point_node
-            break
-    for point_node in pitch_curve_node.childNodes:
-        if "Point" == point_node.nodeName:
-            last_pt_node = point_node
-    i = 0
-    while i < first_pt_node.attributes.length:
-        attribute = first_pt_node.attributes.item(i)
-        if "position" == attribute.name:
-            first_pt_pos_value = attribute.value.split(" ")
-            break
-        i += 1
-    i = 0
-    while i < last_pt_node.attributes.length:
-        attribute = last_pt_node.attributes.item(i)
-        if "position" == attribute.name:
-            last_pt_pos_value = attribute.value.split(" ")
-            break
-
-    first_pt_x = track_scale * float(first_pt_pos_value[0])
-    first_pt_y = float(first_pt_pos_value[1])
-    duration = (track_scale * float(last_pt_pos_value[0])) - first_pt_x
-    if (duration < min_note_duration):
-        print("note duration changed from " + str(duration) + " to " + str(min_note_duration))
-        duration = min_note_duration
-
-    # Get the note's velocity/volume.
-    velocity = 1.0
-    i = 0
-    while i < note_node.attributes.length:
-        attribute = note_node.attributes.item(i)
-        if "volume" == attribute.name:
-            velocity = float(attribute.value)
-            break;
-        i += 1
-
-    note = Note()
-    note._startTime = first_pt_x
-    note._duration = duration
-    note._velocity = 0.01 + (velocity_scale * (velocity - velocity_min))
-    note._pitch = first_pt_y
-
-    add_circular_ring_note_to_mesh(note, note_mesh)
-    #add_flat_note_to_mesh(note, note_mesh)
-    #add_spiral_ring_note_to_mesh(note, note_mesh)
-
-
-def import_track(track_node):
-    global note_suffix_number
-    global track_count
-
-    # Read the track's attributes.
-    color = "#ffffff"
-    track_name = ""
-    i = 0
-    attributes = track_node.attributes
-    while i < attributes.length:
-        attribute = attributes.item(i)
-        if "color" == attribute.name:
-            color = attribute.value
-        if "name" == attribute.name:
-            track_name = attribute.value
-        i += 1
-
-    print_message(" \"" + track_name + "\"")
-
-    # Create the track's note material.
-    note_material = create_note_material(color)
-
-    # Select and duplicate the note template object.
-    clear_ss()
-    note_template_object.select = True
-    bpy.ops.object.duplicate()
-
-    # Rename the new note object.
-    note_object = bpy.data.objects["Note.Main.001"]
-    note_object.name = note_object.name[0 : -3] + to_zero_prefixed_string(note_suffix_number)
-
-    # Set the note mesh materials.
-    note_object.material_slots[0].material = note_material
-
-    note_bmesh = bmesh.new();
-
-    # Read the track's note list.
-    for child_node in track_node.childNodes:
-        if "NoteList" == child_node.nodeName:
-            for note_node in child_node.childNodes:
-                if "Note" == note_node.nodeName:
-                    import_note(note_node, note_bmesh)
-
-    note_bmesh.to_mesh(note_object.data)
-
-    note_suffix_number += 1
-    track_count += 1
-
-
 def update_ranges(file_name):
     global pitch_min
     global pitch_max
@@ -452,11 +383,17 @@ def import_file(file_name):
         elif (modulation_wheel_id == line_id):
             if (-1 == chord):
                 chord = line_value
+    
+    start_time -= current_track_start_time
+    end_time -= current_track_start_time
 
-    # TODO:
-    # Get material from super-track and chord.
-    # Get note object from track and chord, creating it if necessary.
-    # Add note to note object's mesh.
+    note = Note()
+    note._startTime = start_time
+    note._duration = end_time - start_time
+    note._velocity = 0.01 + (velocity_scale * volume)
+    note._pitch = pitch
+    note_mesh = get_note_mesh(super_track, chord)
+    add_circular_ring_note_to_mesh(note, note_mesh)
 
 
 def load(operator,
@@ -524,6 +461,17 @@ def load(operator,
                 update_current_track_start_time(file_name)
             else:
                 import_file(file_name)
+
+    # Add each mesh to it's note.
+    i = 1
+    while i <= 12:
+        note = get_note_object(1, i)
+        mesh = get_note_mesh(1, i)
+        mesh.to_mesh(note.data)
+        note = get_note_object(2, i)
+        mesh = get_note_mesh(2, i)
+        mesh.to_mesh(note.data)
+        i = i + 1
 
     # Delete the note template objects.
     clear_ss()
