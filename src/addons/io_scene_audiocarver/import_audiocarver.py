@@ -1,15 +1,16 @@
 
 import bmesh
 import bpy
-import xml.dom as Dom
 import time
 from math import pi, sin, cos
 import os.path
 import sys
 
+dir_name = ''
+
 current_track = 0
 current_track_start_time = 0
-dir_name = ''
+current_super_track = 0
 
 pitch_id = 0
 modulation_wheel_id = 1
@@ -19,7 +20,6 @@ note_suffix_number = 2
 note_layer = 18
 note_scale = 0.01
 note_template_object = None
-track_count = 1.0
 timeline_count = 0
 timeline_layer = 17
 timeline_text_layer = 16
@@ -43,17 +43,11 @@ angle_increment = 0.0
 note_range_distance = 5.0
 #note_range_distance = 4.0
 
-timeline_imported = False
-
-# set_cycles_material_color = True
-
-track_1_meshes = [];
-track_2_meshes = [];
+track_meshes = [];
 
 i = 0
 while i < 12:
-    track_1_meshes.append(bmesh.new())
-    track_2_meshes.append(bmesh.new())
+    track_meshes.append(bmesh.new())
     i = i + 1
 
 
@@ -87,19 +81,19 @@ def to_zero_prefixed_string(number):
     return zero_prefixed_string
 
 
-def get_note_object_name(track_number, chord_number):
-    return "Note.Main." + str(track_number) + "." + str(chord_number)
+def get_note_object_name(chord_number):
+    return "Note.Main.1." + str(chord_number)
 
 
-def get_note_material(track_number, chord_number):
-    return bpy.data.materials["Note.Material." + str(track_number) + "." + str(chord_number)]
+def get_note_material(chord_number):
+    return bpy.data.materials["Note.Material.1." + str(chord_number)]
 
 
-def get_note_object(track_number, chord_number):
-    note_material = get_note_material(track_number, chord_number)
+def get_note_object(chord_number):
+    note_material = get_note_material(chord_number)
 
     note_object = None
-    note_object_name = get_note_object_name(track_number, chord_number)
+    note_object_name = get_note_object_name(chord_number)
     if (note_object_name in bpy.data.objects.keys()):
         note_object = bpy.data.objects[note_object_name]
     else:
@@ -118,11 +112,8 @@ def get_note_object(track_number, chord_number):
     return note_object
 
 
-def get_note_mesh(track_number, chord_number):
-    if 1 == track_number:
-        return track_1_meshes[int(chord_number - 1)]
-    if 2 == track_number:
-        return track_2_meshes[int(chord_number - 1)]
+def get_note_mesh(chord_number):
+    return track_meshes[int(chord_number - 1)]
 
 
 def add_round_note_shape_to_mesh(note, position, mesh):
@@ -291,7 +282,7 @@ def add_circular_ring_note_to_mesh(note, mesh):
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    track_offset = 1.0 + (track_count / 10.0)
+    track_offset = 1.0 + (float(current_super_track) / 10.0)
     y = track_offset * sin(pitch_angle)
     z = track_offset * cos(pitch_angle)
  
@@ -302,7 +293,7 @@ def add_flat_note_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
     y = 0
-    z = -0.1 * track_count
+    z = -0.1 * float(current_super_track)
     pitch_offset = note._pitch - pitch_min
     if (0.0 < pitch_offset):
         y = -(note_range_distance / 2.0) + (pitch_offset * (note_range_distance / (pitch_max - pitch_min)))
@@ -352,12 +343,6 @@ def update_current_track_start_time(file_name):
     
 
 def import_file(file_name):
-    super_track = -1
-    if (11 == current_track or 12 == current_track):
-        super_track = 1
-    elif (13 == current_track or 14 == current_track):
-        super_track = 2
-    
     chord = -1
     start_time = -1
     end_time = -1
@@ -392,7 +377,7 @@ def import_file(file_name):
     note._duration = end_time - start_time
     note._velocity = 0.01 + (velocity_scale * volume)
     note._pitch = pitch
-    note_mesh = get_note_mesh(super_track, chord)
+    note_mesh = get_note_mesh(chord)
     add_circular_ring_note_to_mesh(note, note_mesh)
 
 
@@ -401,6 +386,7 @@ def load(operator,
          file_name):
     global angle_increment
     global current_track
+    global current_super_track
     global dir_name
     global note_layer
     global note_template_object
@@ -409,8 +395,6 @@ def load(operator,
     global velocity_min
     global velocity_max
     global velocity_scale
-    global timeline_imported
-    global track_count
     global track_scale
 
     # Reset global variables.
@@ -437,7 +421,6 @@ def load(operator,
     track_scale = bpy.data.objects[".Track.Scale.X"].scale[0]
 
     print_message("\nImporting tracks ...")
-    track_count = 1
 
     for file_name in os.listdir(dir_name):
         if (file_name.endswith(".txt")):
@@ -458,6 +441,7 @@ def load(operator,
             note_number = int(file_info[4].split('.')[0])
             if (1 == note_number):
                 current_track = int(file_info[1])
+                current_super_track = int((current_track - 9) / 2)
                 update_current_track_start_time(file_name)
             else:
                 import_file(file_name)
@@ -465,11 +449,8 @@ def load(operator,
     # Add each mesh to it's note.
     i = 1
     while i <= 12:
-        note = get_note_object(1, i)
-        mesh = get_note_mesh(1, i)
-        mesh.to_mesh(note.data)
-        note = get_note_object(2, i)
-        mesh = get_note_mesh(2, i)
+        note = get_note_object(i)
+        mesh = get_note_mesh(i)
         mesh.to_mesh(note.data)
         i = i + 1
 
