@@ -10,7 +10,6 @@ dir_name = ''
 
 current_track = 0
 current_track_start_time = 0
-current_super_track = 0
 
 pitch_id = 0
 modulation_wheel_id = 1
@@ -282,7 +281,7 @@ def add_circular_ring_note_to_mesh(note, mesh):
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    track_offset = 1.0 + (float(current_super_track) / 10.0)
+    track_offset = 1.0
     y = track_offset * sin(pitch_angle)
     z = track_offset * cos(pitch_angle)
  
@@ -441,7 +440,6 @@ def load(operator,
             note_number = int(file_info[4].split('.')[0])
             if (1 == note_number):
                 current_track = int(file_info[1])
-                current_super_track = int((current_track - 9) / 2)
                 update_current_track_start_time(file_name)
             else:
                 import_file(file_name)
