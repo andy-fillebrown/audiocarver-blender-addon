@@ -37,8 +37,8 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
     bl_label = "Import AudioCarver"
     bl_options = {'PRESET', 'UNDO'}
 
-    filename_ext = ".ac"
-    filter_glob = StringProperty(default="*.ac", options={'HIDDEN'})
+    filename_ext = ".txt"
+    filter_glob = StringProperty(default="*.txt", options={'HIDDEN'})
 
     def execute(self, context):
         return import_audiocarver.load(self, context, self.filepath)
@@ -46,7 +46,7 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
 
 def menu_func_import(self, context):
     self.layout.operator(ImportAudioCarver.bl_idname,
-                         text="AudioCarver (.ac)")
+                         text="Csound Log (.txt)")
 
 
 def register():
