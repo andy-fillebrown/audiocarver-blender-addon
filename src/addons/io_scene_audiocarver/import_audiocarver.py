@@ -1,4 +1,7 @@
 
+
+from . import MIDI
+
 import bmesh
 import bpy
 import time
@@ -383,6 +386,13 @@ def import_file(file_name):
 def load(operator,
          context,
          file_name):
+    midi_file = open(file_name, "rb")
+    opus = MIDI.midi2opus(midi_file.read())
+    print(opus)
+    
+    return {'FINISHED'}
+    # Everything after this is old code.
+    
     global angle_increment
     global current_track
     global current_super_track
