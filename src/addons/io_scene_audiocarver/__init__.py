@@ -34,11 +34,11 @@ from bpy_extras.io_utils import (ImportHelper,
 class ImportAudioCarver(bpy.types.Operator, ImportHelper):
     '''Import an AudioCarver file'''
     bl_idname = "import_scene.audiocarver"
-    bl_label = "Import AudioCarver"
+    bl_label = "Import MIDI File"
     bl_options = {'PRESET', 'UNDO'}
 
-    filename_ext = ".txt"
-    filter_glob = StringProperty(default="*.txt", options={'HIDDEN'})
+    filename_ext = ".mid"
+    filter_glob = StringProperty(default="*.mid", options={'HIDDEN'})
 
     def execute(self, context):
         return import_audiocarver.load(self, context, self.filepath)
@@ -46,7 +46,7 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
 
 def menu_func_import(self, context):
     self.layout.operator(ImportAudioCarver.bl_idname,
-                         text="Csound Log (.txt)")
+                         text="MIDI File (.mid)")
 
 
 def register():

@@ -1,4 +1,7 @@
 
+
+from . import MIDI
+
 import bmesh
 import bpy
 import time
@@ -9,11 +12,6 @@ import sys
 dir_name = ''
 
 current_track = 0
-current_track_start_time = 0
-
-pitch_id = 0
-modulation_wheel_id = 1
-volume_id = 7
 
 note_suffix_number = 2
 note_layer = 18
@@ -45,7 +43,7 @@ note_range_distance = 5.0
 track_meshes = [];
 
 i = 0
-while i < 12:
+while i < 1:
     track_meshes.append(bmesh.new())
     i = i + 1
 
@@ -314,69 +312,24 @@ def add_flat_note_to_mesh(note, mesh):
 #     add_arc_note_shape_to_mesh(note, start_radius, start_angle + 0.01, end_radius, end_angle - 0.01, mesh)
 
 
-def update_ranges(file_name):
+def update_ranges(note):
     global pitch_min
     global pitch_max
-    
-    # Read each line in the file and update global max and min values.
-    file = open(dir_name + file_name);
-    for line in file:
-        line = line.rstrip('\r\n').split(', ')
-        line_id = float(line[0])
-        line_value = float(line[2])
-        if (pitch_id == line_id):
-            if (line_value < pitch_min):
-                pitch_min = line_value
-            if (pitch_max < line_value):
-                pitch_max = line_value
 
-
-def update_current_track_start_time(file_name):
-    global current_track_start_time
-    
-    # Read the first line's time parameter.
-    file = open(dir_name + file_name);
-    for line in file:
-        line = line.rstrip('\r\n').split(', ')
-        current_track_start_time = float(line[1])
+    pitch = note[4]
+    if (pitch < pitch_min):
+        pitch_min = pitch
+    if (pitch_max < pitch):
+        pitch_max = pitch
     
 
-def import_file(file_name):
-    chord = -1
-    start_time = -1
-    end_time = -1
-    pitch = -1
-    volume = -1
-
-    file = open(dir_name + file_name);
-    for line in file:
-        line = line.rstrip('\r\n').split(', ')
-        line_id = float(line[0])
-        line_time = float(line[1])
-        line_value = float(line[2])
-        if (-1 == start_time):
-            start_time = line_time
-        else:
-            end_time = line_time
-        if (pitch_id == line_id):
-            if (-1 == pitch):
-                pitch = line_value
-        elif (volume_id == line_id):
-            if (volume < line_value):
-                volume = line_value
-        elif (modulation_wheel_id == line_id):
-            if (-1 == chord):
-                chord = line_value
-    
-    start_time -= current_track_start_time
-    end_time -= current_track_start_time
-
+def import_note(note_event):
     note = Note()
-    note._startTime = start_time
-    note._duration = end_time - start_time
-    note._velocity = 0.01 + (velocity_scale * volume)
-    note._pitch = pitch
-    note_mesh = get_note_mesh(chord)
+    note._startTime = note_event[1] / 1000
+    note._duration = note_event[2] / 1000
+    note._velocity = 0.01 + (velocity_scale * note_event[5] / 127)
+    note._pitch = note_event[4]
+    note_mesh = get_note_mesh(0)
     add_circular_ring_note_to_mesh(note, note_mesh)
 
 
@@ -421,32 +374,48 @@ def load(operator,
 
     print_message("\nImporting tracks ...")
 
-    for file_name in os.listdir(dir_name):
-        if (file_name.endswith(".txt")):
-            file_info = file_name.split('-')
-            #note_id = int(file_info[1])
-            note_number = int(file_info[4].split('.')[0])
-            # The first note is the track time reference.  Skip it.
-            if (1 < note_number):
-                update_ranges(file_name)
+    '''
+  GOING THROUGH A SCORE WITHIN A PYTHON PROGRAM
+    channels = {2,3,5,8,13}
+    itrack = 1   # skip 1st element which is ticks
+    while itrack < len(score):
+        for event in score[itrack]:
+            if event[0] == 'note':   # for example,
+                pass  # do something to all notes
+            # or, to work on events in only particular channels...
+            channel_index = MIDI.Event2channelindex.get(event[0], False)
+            if channel_index and (event[channel_index] in channels):
+                pass  # do something to channels 2,3,5,8 and 13
+        itrack += 1
+    '''
+
+    # Read and parse the MIDI file.
+    midi_file = open(file_name, "rb")
+    score = MIDI.midi2ms_score(midi_file.read())
+
+    # Store the highest and lowest pitches in pitch_min and pitch_max.
+    track = 1
+    track_count = len(score)
+    while track < track_count:
+        for event in score[track]:
+            if ('note' == event[0]):
+                update_ranges(event)
+        track += 1
     
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
-
-    # Import tracks and notes.
-    for file_name in os.listdir(dir_name):
-        if (file_name.endswith(".txt")):
-            file_info = file_name.split('-')
-            note_number = int(file_info[4].split('.')[0])
-            if (1 == note_number):
-                current_track = int(file_info[1])
-                update_current_track_start_time(file_name)
-            else:
-                import_file(file_name)
+    print(pitch_max - pitch_min)    
+    
+    track = 1
+    while track < track_count:
+        for event in score[track]:
+            if ('note' == event[0]):
+                import_note(event)
+        track += 1
 
     # Add each mesh to it's note.
     i = 1
-    while i <= 12:
+    while i <= 1:
         note = get_note_object(i)
         mesh = get_note_mesh(i)
         mesh.to_mesh(note.data)
