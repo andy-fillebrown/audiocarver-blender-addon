@@ -24,7 +24,7 @@ track_scale = 1.0
 
 pitch_min = 128
 pitch_max = 0
-velocity_scale = 1.0
+velocity_scale = 0.1
 
 #verts_per_second = 1 # use "0" to get start and end points only
 verts_per_second = 0 # use "0" to get start and end points only
@@ -312,6 +312,43 @@ def add_flat_note_to_mesh(note, mesh):
 #     add_arc_note_shape_to_mesh(note, start_radius, start_angle + 0.01, end_radius, end_angle - 0.01, mesh)
 
 
+def add_triangular_ring_note_to_mesh(note, mesh):
+    global pitch_min
+    global pitch_max
+ 
+    # Calculate the note's location on the ring.
+    pitch_delta = note._pitch - pitch_min
+    pitch_angle = angle_start + (pitch_delta * angle_increment)
+    pitch_angle_low = pitch_angle - (angle_increment / 2)
+    pitch_angle_high = pitch_angle + (angle_increment / 2)
+    track_offset = 1.0
+    velocity_offset = note._velocity
+    total_offset = track_offset + velocity_offset
+
+    x_start = note._startTime
+    x_end = x_start + note._duration
+    y1_low = track_offset * sin(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
+    y1_high = track_offset * sin(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
+    y1 = total_offset * sin(pitch_angle)
+    z1 = total_offset * cos(pitch_angle)
+    y2 = track_offset * sin(pitch_angle)
+    z2 = track_offset * cos(pitch_angle)
+    
+    mesh_verts = mesh.verts
+    v1_low = mesh_verts.new((x_start, y1_low, z1_low))
+    v1_high = mesh_verts.new((x_start, y1_high, z1_high))
+    v1 = mesh_verts.new((x_start, y1, z1))
+    v2 = mesh_verts.new((x_end, y2, z2))
+    
+    mesh_faces = mesh.faces
+    #mesh_faces.new((v1, v1_high, v1_low))
+    mesh_faces.new((v1, v2, v1_high))
+    mesh_faces.new((v1_high, v2, v1_low))
+    mesh_faces.new((v1_low, v2, v1))
+
+
 def update_ranges(note):
     global pitch_min
     global pitch_max
@@ -321,16 +358,16 @@ def update_ranges(note):
         pitch_min = pitch
     if (pitch_max < pitch):
         pitch_max = pitch
-    
+
 
 def import_note(note_event):
     note = Note()
     note._startTime = note_event[1] / 1000
     note._duration = note_event[2] / 1000
-    note._velocity = 0.01 + (velocity_scale * note_event[5] / 127)
+    note._velocity = velocity_scale * note_event[5] / 127
     note._pitch = note_event[4]
     note_mesh = get_note_mesh(0)
-    add_circular_ring_note_to_mesh(note, note_mesh)
+    add_triangular_ring_note_to_mesh(note, note_mesh)
 
 
 def load(operator,
