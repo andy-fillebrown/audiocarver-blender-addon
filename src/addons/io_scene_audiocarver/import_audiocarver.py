@@ -328,13 +328,13 @@ def add_triangular_ring_note_to_mesh(note, mesh):
     x_start = note._startTime
     x_end = x_start + note._duration
     y1_low = track_offset * sin(pitch_angle_low)
-    z1_low = track_offset * cos(pitch_angle_low)
+    z1_low = -track_offset * cos(pitch_angle_low)
     y1_high = track_offset * sin(pitch_angle_high)
-    z1_high = track_offset * cos(pitch_angle_high)
+    z1_high = -track_offset * cos(pitch_angle_high)
     y1 = total_offset * sin(pitch_angle)
-    z1 = total_offset * cos(pitch_angle)
+    z1 = -total_offset * cos(pitch_angle)
     y2 = track_offset * sin(pitch_angle)
-    z2 = track_offset * cos(pitch_angle)
+    z2 = -track_offset * cos(pitch_angle)
     
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
