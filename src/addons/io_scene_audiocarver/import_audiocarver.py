@@ -411,21 +411,6 @@ def load(operator,
 
     print_message("\nImporting tracks ...")
 
-    '''
-  GOING THROUGH A SCORE WITHIN A PYTHON PROGRAM
-    channels = {2,3,5,8,13}
-    itrack = 1   # skip 1st element which is ticks
-    while itrack < len(score):
-        for event in score[itrack]:
-            if event[0] == 'note':   # for example,
-                pass  # do something to all notes
-            # or, to work on events in only particular channels...
-            channel_index = MIDI.Event2channelindex.get(event[0], False)
-            if channel_index and (event[channel_index] in channels):
-                pass  # do something to channels 2,3,5,8 and 13
-        itrack += 1
-    '''
-
     # Read and parse the MIDI file.
     midi_file = open(file_name, "rb")
     score = MIDI.midi2ms_score(midi_file.read())
@@ -443,6 +428,7 @@ def load(operator,
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
     print(pitch_max - pitch_min)    
     
+    # Import the notes.
     track = 1
     while track < track_count:
         for event in score[track]:
