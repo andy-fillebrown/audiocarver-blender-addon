@@ -360,6 +360,30 @@ def update_ranges(note):
         pitch_max = pitch
 
 
+def add_key(key):
+    white_keys = [0, 2, 4, 5, 7, 9, 11]
+    key_mod_12 = key % 12
+    if (key_mod_12 in white_keys):
+        # Create white key.
+        key_template_object_name = "Key.White"
+    else:
+        # Create black key.
+        key_template_object_name = "Key.Black"
+    
+    # Create the new key object.
+    clear_ss()
+    key_template_object = bpy.data.objects[key_template_object_name]
+    key_template_object.select = True
+    bpy.ops.object.duplicate()
+
+    # Rename the new key object.
+    key_object = bpy.data.objects[key_template_object_name + ".001"]
+    key_object.name = "Key." + to_zero_prefixed_string(key)
+    
+    # Rotate the new key object to the correct position.
+    key_object.rotation_euler[0] = angle_start + (key - pitch_min) * angle_increment
+
+
 def import_note(note_event):
     note = Note()
     note._startTime = note_event[1] / 1000
@@ -404,7 +428,7 @@ def load(operator,
     bpy.context.scene.layers[note_layer] = True
 
     # Set the note template object.
-    note_template_object = bpy.data.objects["Note.Main"]
+    #note_template_object = bpy.data.objects["Note.Main"]
 
     # Set the track scale.
     track_scale = bpy.data.objects[".Track.Scale.X"].scale[0]
@@ -426,8 +450,15 @@ def load(operator,
     
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
-    print(pitch_max - pitch_min)    
+    print(pitch_max - pitch_min) 
     
+    # Create the piano keys.
+    key = pitch_min
+    while key <= pitch_max:
+        add_key(key)
+        key += 1
+       
+    '''
     # Import the notes.
     track = 1
     while track < track_count:
@@ -448,7 +479,7 @@ def load(operator,
     clear_ss()
     note_template_object.select = True
     bpy.ops.object.delete()
-
+    '''
     # Restore the original selection set.
     clear_ss()
     for obj in cur_ss:
