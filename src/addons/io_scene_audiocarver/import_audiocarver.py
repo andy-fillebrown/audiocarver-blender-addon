@@ -360,30 +360,6 @@ def update_ranges(note):
         pitch_max = pitch
 
 
-def add_key(key):
-    white_keys = [0, 2, 4, 5, 7, 9, 11]
-    key_mod_12 = key % 12
-    if (key_mod_12 in white_keys):
-        # Create white key.
-        key_template_object_name = "Key.White"
-    else:
-        # Create black key.
-        key_template_object_name = "Key.Black"
-    
-    # Create the new key object.
-    clear_ss()
-    key_template_object = bpy.data.objects[key_template_object_name]
-    key_template_object.select = True
-    bpy.ops.object.duplicate()
-
-    # Rename the new key object.
-    key_object = bpy.data.objects[key_template_object_name + ".001"]
-    key_object.name = "Key." + to_zero_prefixed_string(key)
-    
-    # Rotate the new key object to the correct position.
-    key_object.rotation_euler[0] = angle_start + (key - pitch_min) * angle_increment
-
-
 def import_note(note_event):
     note = Note()
     note._startTime = note_event[1] / 1000
@@ -392,6 +368,87 @@ def import_note(note_event):
     note._pitch = note_event[4]
     note_mesh = get_note_mesh(0)
     add_triangular_ring_note_to_mesh(note, note_mesh)
+
+
+def note_string(note_number):
+    mod = int(note_number) % 12
+    if 0 == mod:
+        return "C"
+    if 2 == mod:
+        return "D"
+    if 4 == mod:
+        return "E"
+    if 5 == mod:
+        return "F"
+    if 7 == mod:
+        return "G"
+    if 9 == mod:
+        return "A"
+    if 11 == mod:
+        return "B"
+    return ""
+
+
+def create_pitch_lines():
+    global angle_increment
+    global angle_start
+    global angle_end
+    global pitch_min
+    global pitch_max
+
+    print_message("\nCreating pitch lines ...")
+
+    # Create pitch line text objects for each note in the note pitch range.
+    i = pitch_min
+    while i <= pitch_max:
+        angle = angle_start + (angle_increment * (pitch_max - i))
+
+        i_string = str(int(i))
+        text_string = note_string(i)
+        has_text = "" != text_string
+
+        # Duplicate pitch line text template objects.
+        clear_ss()
+        if has_text:
+            bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
+        else:
+            bpy.data.objects["PitchLine.Text.Arrow.00"].select = True
+        bpy.ops.object.duplicate()
+
+        # Setup pitch line text arrow.
+        obj = bpy.data.objects["PitchLine.Text.Arrow.001"]
+        obj.rotation_euler[0] = angle
+        obj.name = "PitchLine.Text.Arrow.." + i_string
+
+        if has_text:
+            clear_ss()
+            bpy.data.objects["PitchLine.Text.0"].select = True
+            bpy.ops.object.duplicate()
+
+            radius = 1.25
+            location = (0.1, radius * sin(angle), -radius * cos(angle))
+
+            # Setup pitch line text.
+            obj = bpy.data.objects["PitchLine.Text.001"]
+            obj.location = location
+            obj.data.body = note_string(i)
+            obj.name = "PitchLine.Text.." + i_string
+
+            # Center pitch line text.
+            bbox = obj.bound_box
+            x_offset = bbox[0][1] + ((bbox[2][1] - bbox[0][1]) / 2.0)
+            y_offset = bbox[0][0] + (bbox[4][0] - bbox[0][0])
+            obj.location[1] += y_offset
+            obj.location[2] -= x_offset
+
+        i += 1
+
+    # Delete pitch line text template objects.
+    clear_ss()
+    bpy.data.objects["PitchLine.Text.0"].select = True
+    bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
+    bpy.data.objects["PitchLine.Text.Arrow.00"].select = True
+    bpy.ops.object.delete()
 
 
 def load(operator,
@@ -452,13 +509,6 @@ def load(operator,
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
     print(pitch_max - pitch_min) 
     
-    # Create the piano keys.
-    key = pitch_min
-    while key <= pitch_max:
-        add_key(key)
-        key += 1
-       
-    '''
     # Import the notes.
     track = 1
     while track < track_count:
@@ -480,6 +530,8 @@ def load(operator,
     note_template_object.select = True
     bpy.ops.object.delete()
     '''
+    create_pitch_lines();
+
     # Restore the original selection set.
     clear_ss()
     for obj in cur_ss:
