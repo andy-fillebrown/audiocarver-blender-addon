@@ -118,8 +118,9 @@ def add_triangular_ring_note_to_mesh(note, mesh):
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    pitch_angle_low = pitch_angle - (velocity / velocity_scale * angle_increment / 2)
-    pitch_angle_high = pitch_angle + (velocity / velocity_scale * angle_increment / 2)
+    velocity_angle = velocity / velocity_scale * angle_increment
+    pitch_angle_low = pitch_angle - velocity_angle
+    pitch_angle_high = pitch_angle + velocity_angle
     track_offset = 1.0
     total_offset = track_offset + velocity
 
@@ -223,7 +224,7 @@ def create_pitch_lines():
             bpy.data.objects["PitchLine.Text.0"].select = True
             bpy.ops.object.duplicate()
 
-            radius = 1.25
+            radius = 1.29
             location = (0.1, radius * sin(angle), -radius * cos(angle))
 
             # Setup pitch line text.
