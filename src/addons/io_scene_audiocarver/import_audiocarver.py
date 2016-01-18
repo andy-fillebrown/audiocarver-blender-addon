@@ -204,15 +204,18 @@ def update_ranges(note):
         pitch_max = pitch
 
 
-def import_note(note_event):
+def import_note(note_event, note_shape):
     note = Note()
     note._startTime = note_event[1] / 1000
     note._duration = note_event[2] / 1000
     note._velocity = velocity_scale * note_event[5] / 127
     note._pitch = note_event[4]
     note_mesh = get_note_mesh(0)
-    #add_triangular_ring_note_to_mesh(note, note_mesh)
-    add_diamond_ring_note_to_mesh(note, note_mesh)
+    print_message(note_shape)
+    if ("Triangular with decay" == note_shape):
+        add_triangular_ring_note_to_mesh(note, note_mesh)
+    elif ("Diamond without decay" == note_shape):
+        add_diamond_ring_note_to_mesh(note, note_mesh)
 
 def note_string(note_number):
     mod = int(note_number) % 12
@@ -297,7 +300,8 @@ def create_pitch_lines():
 
 def load(operator,
          context,
-         file_name):
+         file_name,
+         note_shape):
     global angle_increment
     global current_track
     global current_super_track
@@ -354,7 +358,7 @@ def load(operator,
     while track < track_count:
         for event in score[track]:
             if ('note' == event[0]):
-                import_note(event)
+                import_note(event, note_shape)
         track += 1
 
     # Add each mesh to it's note.
