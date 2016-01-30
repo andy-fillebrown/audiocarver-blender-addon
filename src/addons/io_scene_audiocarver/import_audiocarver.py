@@ -109,7 +109,7 @@ def get_note_mesh(chord_number):
     return track_meshes[int(chord_number - 1)]
 
 
-def add_diamond_ring_note_to_mesh(note, mesh):
+def add_diamond_ring_note_without_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
  
@@ -154,7 +154,46 @@ def add_diamond_ring_note_to_mesh(note, mesh):
     mesh_faces.new((v2_low, v2_in, v2_high, v2_out))
 
 
-def add_triangular_ring_note_to_mesh(note, mesh):
+def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
+    global pitch_min
+    global pitch_max
+ 
+    velocity = note._velocity
+
+    # Calculate the note's location on the ring.
+    pitch_delta = note._pitch - pitch_min
+    pitch_angle = angle_start + (pitch_delta * angle_increment)
+    velocity_angle = velocity / velocity_scale * angle_increment
+    pitch_angle_low = pitch_angle - velocity_angle
+    pitch_angle_high = pitch_angle + velocity_angle
+    track_offset = 1.0
+    max_offset = track_offset + velocity
+
+    x_start = note._startTime
+    x_end = x_start + note._duration
+    y1_low = track_offset * sin(pitch_angle_low)
+    z1_low = -track_offset * cos(pitch_angle_low)
+    y1_high = track_offset * sin(pitch_angle_high)
+    z1_high = -track_offset * cos(pitch_angle_high)
+    y1_out = max_offset * sin(pitch_angle)
+    z1_out = -max_offset * cos(pitch_angle)
+    
+    mesh_verts = mesh.verts
+    v1_low = mesh_verts.new((x_start, y1_low, z1_low))
+    v1_high = mesh_verts.new((x_start, y1_high, z1_high))
+    v1_out = mesh_verts.new((x_start, y1_out, z1_out))
+    v2_low = mesh_verts.new((x_end, y1_low, z1_low))
+    v2_high = mesh_verts.new((x_end, y1_high, z1_high))
+    v2_out = mesh_verts.new((x_end, y1_out, z1_out))
+    
+    mesh_faces = mesh.faces
+    mesh_faces.new((v1_low, v1_high, v2_high, v2_low))
+    mesh_faces.new((v1_high, v1_out, v2_out, v2_high))
+    mesh_faces.new((v1_out, v1_low, v2_low, v2_out))
+    mesh_faces.new((v2_low, v2_high, v2_out))
+
+
+def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
  
@@ -213,9 +252,11 @@ def import_note(note_event, note_shape):
     note_mesh = get_note_mesh(0)
     print_message(note_shape)
     if ("Triangular with decay" == note_shape):
-        add_triangular_ring_note_to_mesh(note, note_mesh)
+        add_triangular_ring_note_with_decay_to_mesh(note, note_mesh)
+    if ("Triangular without decay" == note_shape):
+        add_triangular_ring_note_without_decay_to_mesh(note, note_mesh)
     elif ("Diamond without decay" == note_shape):
-        add_diamond_ring_note_to_mesh(note, note_mesh)
+        add_diamond_ring_note_without_decay_to_mesh(note, note_mesh)
 
 def note_string(note_number):
     mod = int(note_number) % 12

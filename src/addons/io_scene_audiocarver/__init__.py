@@ -42,6 +42,7 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
     
     note_shape = bpy.props.EnumProperty(name="Note Shape",
                                         items = [("Triangular with decay", "Triangular with decay", ""),
+                                                 ("Triangular without decay", "Triangular without decay", ""),
                                                  ("Diamond without decay", "Diamond without decay", "")
                                                  ])
 
