@@ -1,6 +1,6 @@
 
 # Linux (using mate-terminal)
-#mate-terminal --maximize -e "$BLENDER_DIR/blender -P scripts/__debug__.py blend/audiosculpture-rig.blend"
+#mate-terminal --maximize -e "$BLENDER_DIR/blender -P scripts/__debug__.py \"blend/audiosculpture-rig - frames+glow.blend\""
 
 # OSX
 #osascript -e 'tell application "Terminal" to do script "\"$BLENDER_DIR/blender -P scripts/__debug__.py\""'
