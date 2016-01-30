@@ -128,13 +128,13 @@ def add_diamond_ring_note_without_decay_to_mesh(note, mesh):
     x_start = note._startTime
     x_end = x_start + note._duration
     y1_low = track_offset * sin(pitch_angle_low)
-    z1_low = -track_offset * cos(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
     y1_high = track_offset * sin(pitch_angle_high)
-    z1_high = -track_offset * cos(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
     y1_in = min_offset * sin(pitch_angle)
-    z1_in = -min_offset * cos(pitch_angle)
+    z1_in = min_offset * cos(pitch_angle)
     y1_out = max_offset * sin(pitch_angle)
-    z1_out = -max_offset * cos(pitch_angle)
+    z1_out = max_offset * cos(pitch_angle)
     
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
@@ -172,9 +172,9 @@ def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     x_start = note._startTime
     x_end = x_start + note._duration
     y1_low = track_offset * sin(pitch_angle_low)
-    z1_low = -track_offset * cos(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
     y1_high = track_offset * sin(pitch_angle_high)
-    z1_high = -track_offset * cos(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
     y1_out = max_offset * sin(pitch_angle)
     z1_out = -max_offset * cos(pitch_angle)
     
@@ -211,13 +211,13 @@ def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
     x_start = note._startTime
     x_end = x_start + note._duration
     y1_low = track_offset * sin(pitch_angle_low)
-    z1_low = -track_offset * cos(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
     y1_high = track_offset * sin(pitch_angle_high)
-    z1_high = -track_offset * cos(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
     y1 = total_offset * sin(pitch_angle)
-    z1 = -total_offset * cos(pitch_angle)
+    z1 = total_offset * cos(pitch_angle)
     y2 = track_offset * sin(pitch_angle)
-    z2 = -track_offset * cos(pitch_angle)
+    z2 = track_offset * cos(pitch_angle)
     
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
@@ -305,7 +305,7 @@ def create_pitch_lines():
 
         # Setup pitch line text arrow.
         obj = bpy.data.objects["PitchLine.Text.Arrow.001"]
-        obj.rotation_euler[0] = angle
+        obj.rotation_euler[0] = angle + pi
         obj.name = "PitchLine.Text.Arrow.." + i_string
 
         if has_text:
@@ -314,7 +314,7 @@ def create_pitch_lines():
             bpy.ops.object.duplicate()
 
             radius = 1.29
-            location = (0.1, radius * sin(angle), -radius * cos(angle))
+            location = (0.1, -radius * sin(angle), radius * cos(angle))
 
             # Setup pitch line text.
             obj = bpy.data.objects["PitchLine.Text.001"]
