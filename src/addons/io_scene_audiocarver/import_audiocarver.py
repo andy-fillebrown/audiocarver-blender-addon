@@ -176,7 +176,7 @@ def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     y1_high = track_offset * sin(pitch_angle_high)
     z1_high = track_offset * cos(pitch_angle_high)
     y1_out = max_offset * sin(pitch_angle)
-    z1_out = -max_offset * cos(pitch_angle)
+    z1_out = max_offset * cos(pitch_angle)
     
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
