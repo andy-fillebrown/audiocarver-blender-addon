@@ -6,17 +6,13 @@ import bmesh
 import bpy
 import time
 from math import pi, sin, cos
-import os.path
 import sys
-
-dir_name = ''
 
 current_track = 0
 
 note_suffix_number = 2
 note_layer = 18
 note_scale = 0.01
-note_template_object = None
 timeline_count = 0
 timeline_layer = 17
 timeline_text_layer = 16
@@ -113,217 +109,104 @@ def get_note_mesh(chord_number):
     return track_meshes[int(chord_number - 1)]
 
 
-def add_round_note_shape_to_mesh(note, position, mesh):
-    global max_note_thickness
-
-    x = note._startTime
-    y = position[0]
-    z = position[1]
-
-    mesh_verts = mesh.verts
-    mesh_faces = mesh.faces
-    x_increment = 10000000000000
-    if (0.0 < verts_per_second):
-        x_increment = 1.0 / verts_per_second;
-    mesh_angle_increment = 2 * pi / verts_per_ring
-    x1 = 0.0
-    current_thickness = max_note_thickness
-    while (x1 < note._duration):
-        x2 = x1 + x_increment
-        if (note._duration < x2):
-            x2 = note._duration
-        angle = 0
-        next_thickness = (1.0 - (x2 / (2 * note._duration))) * max_note_thickness
-        while (angle < (2 * pi)):
-            y1 = note._velocity * sin(angle)
-            z1 = note._velocity * cos(angle)
-            angle = angle + mesh_angle_increment
-            y2 = note._velocity * sin(angle)
-            z2 = note._velocity * cos(angle)
-            v1 = mesh_verts.new((x + x1, y + y1 * current_thickness, z + z1 * current_thickness))
-            v2 = mesh_verts.new((x + x2, y + y1 * next_thickness, z + z1 * next_thickness))
-            v3 = mesh_verts.new((x + x2, y + y2 * next_thickness, z + z2 * next_thickness))
-            v4 = mesh_verts.new((x + x1, y + y2 * current_thickness, z + z2 * current_thickness))
-            mesh_faces.new((v1, v2, v3, v4))
-        x1 = x2
-        current_thickness = next_thickness
-
-
-def add_square_note_shape_to_mesh(note, position, mesh):
-    x = note._startTime
-    y = -position[0]
-    z = position[1]
-    note_width = note_range_distance / (pitch_max - pitch_min)
-    half_note_width = note_width / 2.0
- 
-    mesh_verts = mesh.verts
-    mesh_faces = mesh.faces
- 
-    x_increment = 10000000000000
-    if (0.0 < verts_per_second):
-        x_increment = 1.0 / verts_per_second;
- 
-    x1 = 0.0
-    current_thickness = max_note_thickness
- 
-    # front
-    y1 = y - half_note_width
-    y2 = y + half_note_width
-    z2 = z - (note._velocity * current_thickness)
-    v1 = mesh_verts.new((x, y1, z))
-    v2 = mesh_verts.new((x, y1, z2))
-    v3 = mesh_verts.new((x, y2, z2))
-    v4 = mesh_verts.new((x, y2, z))
-    mesh_faces.new((v1, v2, v3, v4))
- 
-    while (x1 < note._duration):
-        x2 = x1 + x_increment
-        if (note._duration < x2):
-            x2 = note._duration
-        next_thickness = (1.0 - (x2 / (2 * note._duration))) * max_note_thickness
- 
-        # top
-        y1 = y - half_note_width
-        y2 = y + half_note_width
-        z1 = z - (note._velocity * current_thickness)
-        z2 = z - (note._velocity * next_thickness)
-        v1 = mesh_verts.new((x + x1, y1, z1))
-        v2 = mesh_verts.new((x + x2, y1, z2))
-        v3 = mesh_verts.new((x + x2, y2, z2))
-        v4 = mesh_verts.new((x + x1, y2, z1))
-        mesh_faces.new((v1, v2, v3, v4))
- 
-        # right
-        y1 = y + half_note_width
-        z1 = z - (note._velocity * current_thickness)
-        z2 = z - (note._velocity * next_thickness)
-        v1 = mesh_verts.new((x + x1, y1, z1))
-        v2 = mesh_verts.new((x + x2, y1, z2))
-        v3 = mesh_verts.new((x + x2, y1, z))
-        v4 = mesh_verts.new((x + x1, y1, z))
-        mesh_faces.new((v1, v2, v3, v4))
- 
-        # bottom
-        y1 = y - half_note_width
-        y2 = y + half_note_width
-        v1 = mesh_verts.new((x + x1, y2, z))
-        v2 = mesh_verts.new((x + x2, y2, z))
-        v3 = mesh_verts.new((x + x2, y1, z))
-        v4 = mesh_verts.new((x + x1, y1, z))
-        mesh_faces.new((v1, v2, v3, v4))
- 
-        # left
-        y1 = y - half_note_width
-        z1 = z - (note._velocity * current_thickness)        #z2 = z - (note._velocity * current_thickness)
-        z2 = z - (note._velocity * next_thickness)        #z4 = z - (note._velocity * next_thickness)
-        v1 = mesh_verts.new((x + x1, y1, z))
-        v2 = mesh_verts.new((x + x2, y1, z))
-        v3 = mesh_verts.new((x + x2, y1, z2))
-        v4 = mesh_verts.new((x + x1, y1, z1))
-        mesh_faces.new((v1, v2, v3, v4))
- 
-        x1 = x2
-        current_thickness = next_thickness
- 
-    # back
-    y1 = y - half_note_width
-    y2 = y + half_note_width    #z1 = z - (note._velocity * current_thickness)
-    z1 = z - (note._velocity * current_thickness)
-    v1 = mesh_verts.new((x + x1, y2, z))
-    v2 = mesh_verts.new((x + x1, y2, z1))
-    v3 = mesh_verts.new((x + x1, y1, z1))
-    v4 = mesh_verts.new((x + x1, y1, z))
-    mesh_faces.new((v1, v2, v3, v4))
-
-
-# def add_arc_note_shape_to_mesh(note, start_radius, start_angle, end_radius, end_angle, mesh):
-#     global max_note_thickness
-# 
-#     x = note._startTime
-# 
-#     mesh_verts = mesh.verts
-#     mesh_faces = mesh.faces
-#     x_increment = 10000000000000
-#     if (0.0 < verts_per_second):
-#         x_increment = 1.0 / verts_per_second;
-#     x1 = 0.0
-#     radius_increment = (end_radius - start_radius) / verts_per_ring
-#     angle_increment = (end_angle - start_angle) / verts_per_ring
-#     while (x1 < note._duration):
-#         x2 = x1 + x_increment
-#         if (note._duration < x2):
-#             x2 = note._duration
-#         radius = start_radius
-#         angle = start_angle
-#         i = 0
-#         while (i < verts_per_ring):
-#             y1 = radius * sin(angle)
-#             z1 = radius * cos(angle)
-#             radius = radius + radius_increment
-#             angle = angle + angle_increment
-#             y2 = radius * sin(angle)
-#             z2 = radius * cos(angle)
-#             v1 = mesh_verts.new((x + x1, y1, z1))
-#             v2 = mesh_verts.new((x + x2, y1, z1))
-#             v3 = mesh_verts.new((x + x2, y2, z2))
-#             v4 = mesh_verts.new((x + x1, y2, z2))
-#             mesh_faces.new((v1, v2, v3, v4))
-#             i = i + 1
-#         x1 = x2
-
-
-def add_circular_ring_note_to_mesh(note, mesh):
+def add_diamond_ring_note_without_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
  
+    velocity = note._velocity
+
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
+    velocity_angle = velocity / velocity_scale * angle_increment
+    pitch_angle_low = pitch_angle - velocity_angle
+    pitch_angle_high = pitch_angle + velocity_angle
     track_offset = 1.0
-    y = track_offset * sin(pitch_angle)
-    z = track_offset * cos(pitch_angle)
- 
-    add_round_note_shape_to_mesh(note, (y, z), mesh)
+    min_offset = track_offset - velocity
+    max_offset = track_offset + velocity
+
+    x_start = note._startTime
+    x_end = x_start + note._duration
+    y1_low = track_offset * sin(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
+    y1_high = track_offset * sin(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
+    y1_in = min_offset * sin(pitch_angle)
+    z1_in = min_offset * cos(pitch_angle)
+    y1_out = max_offset * sin(pitch_angle)
+    z1_out = max_offset * cos(pitch_angle)
+    
+    mesh_verts = mesh.verts
+    v1_low = mesh_verts.new((x_start, y1_low, z1_low))
+    v1_high = mesh_verts.new((x_start, y1_high, z1_high))
+    v1_in = mesh_verts.new((x_start, y1_in, z1_in))
+    v1_out = mesh_verts.new((x_start, y1_out, z1_out))
+    v2_low = mesh_verts.new((x_end, y1_low, z1_low))
+    v2_high = mesh_verts.new((x_end, y1_high, z1_high))
+    v2_in = mesh_verts.new((x_end, y1_in, z1_in))
+    v2_out = mesh_verts.new((x_end, y1_out, z1_out))
+    
+    mesh_faces = mesh.faces
+    mesh_faces.new((v1_low, v1_in, v2_in, v2_low))
+    mesh_faces.new((v1_in, v1_high, v2_high, v2_in))
+    mesh_faces.new((v1_high, v1_out, v2_out, v2_high))
+    mesh_faces.new((v1_out, v1_low, v2_low, v2_out))
+    mesh_faces.new((v2_low, v2_in, v2_high, v2_out))
 
 
-def add_flat_note_to_mesh(note, mesh):
+def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
-    y = 0
-    z = -0.1 * float(current_super_track)
-    pitch_offset = note._pitch - pitch_min
-    if (0.0 < pitch_offset):
-        y = -(note_range_distance / 2.0) + (pitch_offset * (note_range_distance / (pitch_max - pitch_min)))
-    add_square_note_shape_to_mesh(note, (y, z), mesh)
-
-
-# def add_spiral_ring_note_to_mesh(note, mesh):
-#     pitch_key = (note._pitch % 12.0) - 9.0 # 9 == A
-#     pitch_8va = int(note._pitch / 12.0)
-# 
-#     # Calculate the note's location.
-#     start_radius = 1.5 - (4.0 * max_note_thickness * (pitch_8va + ((pitch_key - 1.0) / 12.0)))
-#     end_radius = 1.5 - (4.0 * max_note_thickness * (pitch_8va + ((pitch_key) / 12.0)))
-#     pitch_angle = pitch_key * pi / 6.0 # key * 2pi / 12
-#     start_angle = (pitch_key * 2 * pi / 12.0) - (0.5 * 2 * pi / 12.0)
-#     end_angle = (pitch_key * 2 * pi / 12.0) + (0.5 * 2 * pi / 12.0)
-# 
-#     #add_round_note_shape_to_mesh(note, (y, z), mesh)
-#     add_arc_note_shape_to_mesh(note, start_radius, start_angle + 0.01, end_radius, end_angle - 0.01, mesh)
-
-
-def add_triangular_ring_note_to_mesh(note, mesh):
-    global pitch_min
-    global pitch_max
  
+    velocity = note._velocity
+
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    pitch_angle_low = pitch_angle - (angle_increment / 2)
-    pitch_angle_high = pitch_angle + (angle_increment / 2)
+    velocity_angle = velocity / velocity_scale * angle_increment
+    pitch_angle_low = pitch_angle - velocity_angle
+    pitch_angle_high = pitch_angle + velocity_angle
     track_offset = 1.0
-    velocity_offset = note._velocity
-    total_offset = track_offset + velocity_offset
+    max_offset = track_offset + velocity
+
+    x_start = note._startTime
+    x_end = x_start + note._duration
+    y1_low = track_offset * sin(pitch_angle_low)
+    z1_low = track_offset * cos(pitch_angle_low)
+    y1_high = track_offset * sin(pitch_angle_high)
+    z1_high = track_offset * cos(pitch_angle_high)
+    y1_out = max_offset * sin(pitch_angle)
+    z1_out = max_offset * cos(pitch_angle)
+    
+    mesh_verts = mesh.verts
+    v1_low = mesh_verts.new((x_start, y1_low, z1_low))
+    v1_high = mesh_verts.new((x_start, y1_high, z1_high))
+    v1_out = mesh_verts.new((x_start, y1_out, z1_out))
+    v2_low = mesh_verts.new((x_end, y1_low, z1_low))
+    v2_high = mesh_verts.new((x_end, y1_high, z1_high))
+    v2_out = mesh_verts.new((x_end, y1_out, z1_out))
+    
+    mesh_faces = mesh.faces
+    mesh_faces.new((v1_low, v1_high, v2_high, v2_low))
+    mesh_faces.new((v1_high, v1_out, v2_out, v2_high))
+    mesh_faces.new((v1_out, v1_low, v2_low, v2_out))
+    mesh_faces.new((v2_low, v2_high, v2_out))
+
+
+def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
+    global pitch_min
+    global pitch_max
+ 
+    velocity = note._velocity
+
+    # Calculate the note's location on the ring.
+    pitch_delta = note._pitch - pitch_min
+    pitch_angle = angle_start + (pitch_delta * angle_increment)
+    velocity_angle = velocity / velocity_scale * angle_increment
+    pitch_angle_low = pitch_angle - velocity_angle
+    pitch_angle_high = pitch_angle + velocity_angle
+    track_offset = 1.0
+    total_offset = track_offset + velocity
 
     x_start = note._startTime
     x_end = x_start + note._duration
@@ -360,19 +243,106 @@ def update_ranges(note):
         pitch_max = pitch
 
 
-def import_note(note_event):
+def import_note(note_event, note_shape):
     note = Note()
     note._startTime = note_event[1] / 1000
     note._duration = note_event[2] / 1000
     note._velocity = velocity_scale * note_event[5] / 127
     note._pitch = note_event[4]
     note_mesh = get_note_mesh(0)
-    add_triangular_ring_note_to_mesh(note, note_mesh)
+    print_message(note_shape)
+    if ("Triangular with decay" == note_shape):
+        add_triangular_ring_note_with_decay_to_mesh(note, note_mesh)
+    if ("Triangular without decay" == note_shape):
+        add_triangular_ring_note_without_decay_to_mesh(note, note_mesh)
+    elif ("Diamond without decay" == note_shape):
+        add_diamond_ring_note_without_decay_to_mesh(note, note_mesh)
+
+def note_string(note_number):
+    mod = int(note_number) % 12
+    if 0 == mod:
+        return "C"
+    if 2 == mod:
+        return "D"
+    if 4 == mod:
+        return "E"
+    if 5 == mod:
+        return "F"
+    if 7 == mod:
+        return "G"
+    if 9 == mod:
+        return "A"
+    if 11 == mod:
+        return "B"
+    return ""
+
+
+def create_pitch_lines():
+    global angle_increment
+    global angle_start
+    global angle_end
+    global pitch_min
+    global pitch_max
+
+    print_message("\nCreating pitch lines ...")
+
+    # Create pitch line text objects for each note in the note pitch range.
+    i = pitch_min
+    while i <= pitch_max:
+        angle = angle_start + (angle_increment * (pitch_max - i))
+
+        i_string = str(int(i))
+        text_string = note_string(i)
+        has_text = "" != text_string
+
+        # Duplicate pitch line text template objects.
+        clear_ss()
+        if has_text:
+            bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
+        else:
+            bpy.data.objects["PitchLine.Text.Arrow.00"].select = True
+        bpy.ops.object.duplicate()
+
+        # Setup pitch line text arrow.
+        obj = bpy.data.objects["PitchLine.Text.Arrow.001"]
+        obj.rotation_euler[0] = angle + pi
+        obj.name = "PitchLine.Text.Arrow.." + i_string
+
+        if has_text:
+            clear_ss()
+            bpy.data.objects["PitchLine.Text.0"].select = True
+            bpy.ops.object.duplicate()
+
+            radius = 1.29
+            location = (0.1, -radius * sin(angle), radius * cos(angle))
+
+            # Setup pitch line text.
+            obj = bpy.data.objects["PitchLine.Text.001"]
+            obj.location = location
+            obj.data.body = note_string(i)
+            obj.name = "PitchLine.Text.." + i_string
+
+            # Center pitch line text.
+            bbox = obj.bound_box
+            x_offset = bbox[0][1] + ((bbox[2][1] - bbox[0][1]) / 2.0)
+            y_offset = bbox[0][0] + (bbox[4][0] - bbox[0][0])
+            obj.location[1] += y_offset
+            obj.location[2] -= x_offset
+
+        i += 1
+
+    # Delete pitch line text template objects.
+    clear_ss()
+    bpy.data.objects["PitchLine.Text.0"].select = True
+    bpy.data.objects["PitchLine.Text.Arrow.0"].select = True
+    bpy.data.objects["PitchLine.Text.Arrow.00"].select = True
+    bpy.ops.object.delete()
 
 
 def load(operator,
          context,
-         file_name):
+         file_name,
+         note_shape):
     global angle_increment
     global current_track
     global current_super_track
@@ -391,8 +361,7 @@ def load(operator,
     pitch_max = 0
     current_track = 0
 
-    dir_name = os.path.dirname(file_name) + '/'
-    print_message("\nImporting Csound Log Directory" + dir_name + "/ ...")
+    print_message("\nImporting " + file_name + " ...")
 
     start_time = time.time()
 
@@ -403,28 +372,10 @@ def load(operator,
     # Turn on the note layers.
     bpy.context.scene.layers[note_layer] = True
 
-    # Set the note template object.
-    note_template_object = bpy.data.objects["Note.Main"]
-
     # Set the track scale.
     track_scale = bpy.data.objects[".Track.Scale.X"].scale[0]
 
     print_message("\nImporting tracks ...")
-
-    '''
-  GOING THROUGH A SCORE WITHIN A PYTHON PROGRAM
-    channels = {2,3,5,8,13}
-    itrack = 1   # skip 1st element which is ticks
-    while itrack < len(score):
-        for event in score[itrack]:
-            if event[0] == 'note':   # for example,
-                pass  # do something to all notes
-            # or, to work on events in only particular channels...
-            channel_index = MIDI.Event2channelindex.get(event[0], False)
-            if channel_index and (event[channel_index] in channels):
-                pass  # do something to channels 2,3,5,8 and 13
-        itrack += 1
-    '''
 
     # Read and parse the MIDI file.
     midi_file = open(file_name, "rb")
@@ -441,13 +392,14 @@ def load(operator,
     
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
-    print(pitch_max - pitch_min)    
+    print(pitch_max - pitch_min) 
     
+    # Import the notes.
     track = 1
     while track < track_count:
         for event in score[track]:
             if ('note' == event[0]):
-                import_note(event)
+                import_note(event, note_shape)
         track += 1
 
     # Add each mesh to it's note.
@@ -458,10 +410,7 @@ def load(operator,
         mesh.to_mesh(note.data)
         i = i + 1
 
-    # Delete the note template objects.
-    clear_ss()
-    note_template_object.select = True
-    bpy.ops.object.delete()
+    create_pitch_lines();
 
     # Restore the original selection set.
     clear_ss()

@@ -39,9 +39,15 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
 
     filename_ext = ".mid"
     filter_glob = StringProperty(default="*.mid", options={'HIDDEN'})
+    
+    note_shape = bpy.props.EnumProperty(name="Note Shape",
+                                        items = [("Triangular with decay", "Triangular with decay", ""),
+                                                 ("Triangular without decay", "Triangular without decay", ""),
+                                                 ("Diamond without decay", "Diamond without decay", "")
+                                                 ])
 
     def execute(self, context):
-        return import_audiocarver.load(self, context, self.filepath)
+        return import_audiocarver.load(self, context, self.filepath, self.note_shape)
 
 
 def menu_func_import(self, context):

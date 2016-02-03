@@ -1,7 +1,7 @@
 
 @if "%BLENDER_DIR%."=="." goto blender_dir_not_set
 
-"%BLENDER_DIR%\blender.exe" blend\audiosculpture-rig.blend
+"%BLENDER_DIR%\blender.exe" "blend\audiosculpture-rig - frames+glow.blend"
 @exit
 
 :blender_dir_not_set
