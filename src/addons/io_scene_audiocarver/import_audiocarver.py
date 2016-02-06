@@ -1,14 +1,17 @@
 
-
-from . import MIDI
-
 import bmesh
 import bpy
 import time
 from math import pi, sin, cos
+import os.path
 import sys
 
 current_track = 0
+current_track_start_time = 0
+
+pitch_id = 0
+modulation_wheel_id = 1
+volume_id = 7
 
 note_suffix_number = 2
 note_layer = 18
@@ -232,23 +235,68 @@ def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
     mesh_faces.new((v1_low, v2, v1))
 
 
-def update_ranges(note):
+def update_ranges(file_name):
     global pitch_min
     global pitch_max
 
-    pitch = note[4]
-    if (pitch < pitch_min):
-        pitch_min = pitch
-    if (pitch_max < pitch):
-        pitch_max = pitch
+    # Read each line in the file and update global max and min values.
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        line_id = float(line[0])
+        line_value = float(line[2])
+        if (pitch_id == line_id):
+            if (line_value < pitch_min):
+                pitch_min = line_value
+            if (pitch_max < line_value):
+                pitch_max = line_value
 
 
-def import_note(note_event, note_shape):
+def update_current_track_start_time(file_name):
+    global current_track_start_time
+    
+    # Read the first line's time parameter.
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        current_track_start_time = float(line[1])
+    
+
+def import_file(file_name, note_shape):
+    chord = -1
+    start_time = -1
+    end_time = -1
+    pitch = -1
+    volume = -1
+
+    file = open(dir_name + file_name);
+    for line in file:
+        line = line.rstrip('\r\n').split(', ')
+        line_id = float(line[0])
+        line_time = float(line[1])
+        line_value = float(line[2])
+        if (-1 == start_time):
+            start_time = line_time
+        else:
+            end_time = line_time
+        if (pitch_id == line_id):
+            if (-1 == pitch):
+                pitch = line_value
+        elif (volume_id == line_id):
+            if (volume < line_value):
+                volume = line_value
+        elif (modulation_wheel_id == line_id):
+            if (-1 == chord):
+                chord = line_value
+
+    start_time -= current_track_start_time
+    end_time -= current_track_start_time
+
     note = Note()
-    note._startTime = note_event[1] / 1000
-    note._duration = note_event[2] / 1000
-    note._velocity = velocity_scale * note_event[5] / 127
-    note._pitch = note_event[4]
+    note._startTime = start_time
+    note._duration = end_time - start_time
+    note._velocity = 0.01 + (velocity_scale * volume)
+    note._pitch = pitch
     note_mesh = get_note_mesh(0)
     print_message(note_shape)
     if ("Triangular with decay" == note_shape):
@@ -361,7 +409,8 @@ def load(operator,
     pitch_max = 0
     current_track = 0
 
-    print_message("\nImporting " + file_name + " ...")
+    dir_name = os.path.dirname(file_name) + '/'
+    print_message("\nImporting Csound Log Directory " + dir_name + " ...")
 
     start_time = time.time()
 
@@ -377,30 +426,29 @@ def load(operator,
 
     print_message("\nImporting tracks ...")
 
-    # Read and parse the MIDI file.
-    midi_file = open(file_name, "rb")
-    score = MIDI.midi2ms_score(midi_file.read())
-
-    # Store the highest and lowest pitches in pitch_min and pitch_max.
-    track = 1
-    track_count = len(score)
-    while track < track_count:
-        for event in score[track]:
-            if ('note' == event[0]):
-                update_ranges(event)
-        track += 1
+    for file_name in os.listdir(dir_name):
+        if (file_name.endswith(".txt")):
+            file_info = file_name.split('-')
+            #note_id = int(file_info[1])
+            note_number = int(file_info[4].split('.')[0])
+            # The first note is the track time reference.  Skip it.
+            if (1 < note_number):
+                update_ranges(file_name)
     
     # Calculate the global angle increment.
     angle_increment = (angle_end - angle_start) / (pitch_max - pitch_min)
     print(pitch_max - pitch_min) 
     
-    # Import the notes.
-    track = 1
-    while track < track_count:
-        for event in score[track]:
-            if ('note' == event[0]):
-                import_note(event, note_shape)
-        track += 1
+    # Import tracks and notes.
+    for file_name in os.listdir(dir_name):
+        if (file_name.endswith(".txt")):
+            file_info = file_name.split('-')
+            note_number = int(file_info[4].split('.')[0])
+            if (1 == note_number):
+                current_track = int(file_info[1])
+                update_current_track_start_time(file_name)
+            else:
+                import_file(file_name, note_shape)
 
     # Add each mesh to it's note.
     i = 1
