@@ -23,7 +23,7 @@ track_scale = 1.0
 
 pitch_min = 128
 pitch_max = 0
-velocity_scale = 0.1
+velocity_scale = 0.333
 
 #verts_per_second = 1 # use "0" to get start and end points only
 verts_per_second = 0 # use "0" to get start and end points only
@@ -161,12 +161,12 @@ def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
  
-    velocity = note._velocity
+    velocity = velocity_scale * note._velocity
 
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    velocity_angle = velocity / velocity_scale * angle_increment
+    velocity_angle = 8 * velocity * angle_increment
     pitch_angle_low = pitch_angle - velocity_angle
     pitch_angle_high = pitch_angle + velocity_angle
     track_offset = 1.0
@@ -181,13 +181,17 @@ def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     y1_out = max_offset * sin(pitch_angle)
     z1_out = max_offset * cos(pitch_angle)
     
+    note_end_offset = 0.15
+    y_end_offset = note_end_offset * sin(pitch_angle)
+    z_end_offset = note_end_offset * cos(pitch_angle)
+    
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
     v1_high = mesh_verts.new((x_start, y1_high, z1_high))
     v1_out = mesh_verts.new((x_start, y1_out, z1_out))
-    v2_low = mesh_verts.new((x_end, y1_low, z1_low))
-    v2_high = mesh_verts.new((x_end, y1_high, z1_high))
-    v2_out = mesh_verts.new((x_end, y1_out, z1_out))
+    v2_low = mesh_verts.new((x_end, y1_low + y_end_offset, z1_low + z_end_offset))
+    v2_high = mesh_verts.new((x_end, y1_high + y_end_offset, z1_high + z_end_offset))
+    v2_out = mesh_verts.new((x_end, y1_out + y_end_offset, z1_out + z_end_offset))
     
     mesh_faces = mesh.faces
     mesh_faces.new((v1_low, v1_high, v2_high, v2_low))
