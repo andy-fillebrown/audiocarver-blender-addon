@@ -39,6 +39,8 @@ angle_increment = 0.0
 note_range_distance = 5.0
 #note_range_distance = 4.0
 
+note_end_offset = 0.15
+
 track_meshes = [];
 
 i = 0
@@ -181,7 +183,6 @@ def add_triangular_ring_note_without_decay_to_mesh(note, mesh):
     y1_out = max_offset * sin(pitch_angle)
     z1_out = max_offset * cos(pitch_angle)
     
-    note_end_offset = 0.15
     y_end_offset = note_end_offset * sin(pitch_angle)
     z_end_offset = note_end_offset * cos(pitch_angle)
     
@@ -204,16 +205,16 @@ def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
  
-    velocity = note._velocity
+    velocity = velocity_scale * note._velocity
 
     # Calculate the note's location on the ring.
     pitch_delta = note._pitch - pitch_min
     pitch_angle = angle_start + (pitch_delta * angle_increment)
-    velocity_angle = velocity / velocity_scale * angle_increment
+    velocity_angle = 8 * velocity * angle_increment
     pitch_angle_low = pitch_angle - velocity_angle
     pitch_angle_high = pitch_angle + velocity_angle
     track_offset = 1.0
-    total_offset = track_offset + velocity
+    max_offset = track_offset + velocity
 
     x_start = note._startTime
     x_end = x_start + note._duration
@@ -221,19 +222,21 @@ def add_triangular_ring_note_with_decay_to_mesh(note, mesh):
     z1_low = track_offset * cos(pitch_angle_low)
     y1_high = track_offset * sin(pitch_angle_high)
     z1_high = track_offset * cos(pitch_angle_high)
-    y1 = total_offset * sin(pitch_angle)
-    z1 = total_offset * cos(pitch_angle)
-    y2 = track_offset * sin(pitch_angle)
-    z2 = track_offset * cos(pitch_angle)
+    y1 = max_offset * sin(pitch_angle)
+    z1 = max_offset * cos(pitch_angle)
+    y2 = max_offset * sin(pitch_angle)
+    z2 = max_offset * cos(pitch_angle)
     
+    y_end_offset = note_end_offset * sin(pitch_angle)
+    z_end_offset = note_end_offset * cos(pitch_angle)
+
     mesh_verts = mesh.verts
     v1_low = mesh_verts.new((x_start, y1_low, z1_low))
     v1_high = mesh_verts.new((x_start, y1_high, z1_high))
     v1 = mesh_verts.new((x_start, y1, z1))
-    v2 = mesh_verts.new((x_end, y2, z2))
+    v2 = mesh_verts.new((x_end, y2 + y_end_offset, z2 + z_end_offset))
     
     mesh_faces = mesh.faces
-    #mesh_faces.new((v1, v1_high, v1_low))
     mesh_faces.new((v1, v2, v1_high))
     mesh_faces.new((v1_high, v2, v1_low))
     mesh_faces.new((v1_low, v2, v1))
