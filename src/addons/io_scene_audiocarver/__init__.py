@@ -41,7 +41,8 @@ class ImportAudioCarver(bpy.types.Operator, ImportHelper):
     filter_glob = StringProperty(default="*.txt", options={'HIDDEN'})
     
     note_shape = bpy.props.EnumProperty(name="Note Shape",
-                                        items = [("Triangular with decay", "Triangular with decay", ""),
+                                        items = [("Circular with decay", "Circular with decay", ""),
+                                                 ("Triangular with decay", "Triangular with decay", ""),
                                                  ("Triangular without decay", "Triangular without decay", ""),
                                                  ("Diamond without decay", "Diamond without decay", "")
                                                  ])

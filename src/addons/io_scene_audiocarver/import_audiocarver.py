@@ -114,6 +114,44 @@ def get_note_mesh(chord_number):
     return track_meshes[int(chord_number - 1)]
 
 
+def add_circular_note_with_decay_to_mesh(note, mesh):
+    pitch_delta = note._pitch - pitch_min
+    pitch_angle = angle_start + (pitch_delta * angle_increment)
+
+    x = note._startTime
+    y = sin(pitch_angle)
+    z = cos(pitch_angle)
+
+    mesh_verts = mesh.verts
+    mesh_faces = mesh.faces
+    x_increment = 10000000000000
+    if (0.0 < verts_per_second):
+        x_increment = 1.0 / verts_per_second;
+    mesh_angle_increment = 2 * pi / verts_per_ring
+    x1 = 0.0
+    velocity = note._velocity * velocity_scale;
+    current_thickness = velocity
+    while (x1 < note._duration):
+        x2 = x1 + x_increment
+        if (note._duration < x2):
+            x2 = note._duration
+        angle = 0
+        next_thickness = (1.0 - (x2 / (2 * note._duration))) * velocity
+        while (angle < (2 * pi)):
+            y1 = note._velocity * sin(angle)
+            z1 = note._velocity * cos(angle)
+            angle = angle + mesh_angle_increment
+            y2 = note._velocity * sin(angle)
+            z2 = note._velocity * cos(angle)
+            v1 = mesh_verts.new((x + x1, y + y1 * current_thickness, z + z1 * current_thickness))
+            v2 = mesh_verts.new((x + x2, y + y1 * next_thickness, z + z1 * next_thickness))
+            v3 = mesh_verts.new((x + x2, y + y2 * next_thickness, z + z2 * next_thickness))
+            v4 = mesh_verts.new((x + x1, y + y2 * current_thickness, z + z2 * current_thickness))
+            mesh_faces.new((v1, v2, v3, v4))
+        x1 = x2
+        current_thickness = next_thickness
+
+
 def add_diamond_ring_note_without_decay_to_mesh(note, mesh):
     global pitch_min
     global pitch_max
@@ -306,9 +344,11 @@ def import_file(file_name, note_shape):
     note._pitch = pitch
     note_mesh = get_note_mesh(0)
     print_message(note_shape)
-    if ("Triangular with decay" == note_shape):
+    if ("Circular with decay" == note_shape):
+        add_circular_note_with_decay_to_mesh(note, note_mesh)
+    elif ("Triangular with decay" == note_shape):
         add_triangular_ring_note_with_decay_to_mesh(note, note_mesh)
-    if ("Triangular without decay" == note_shape):
+    elif ("Triangular without decay" == note_shape):
         add_triangular_ring_note_without_decay_to_mesh(note, note_mesh)
     elif ("Diamond without decay" == note_shape):
         add_diamond_ring_note_without_decay_to_mesh(note, note_mesh)
